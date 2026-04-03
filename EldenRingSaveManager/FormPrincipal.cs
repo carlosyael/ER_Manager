@@ -2,6 +2,8 @@ using System;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 
@@ -28,8 +30,8 @@ namespace EldenRingSaveManager
             CargarPerfiles();
             ActualizarEstado();
             
-            Logger.Write("[GUI] UI Iniciada correctamente. v3.0");
-            Log("Aplicación iniciada. Bienvenido a Elden Ring Save Manager v3.0.");
+            Logger.Write("[GUI] UI Iniciada correctamente. v4.0");
+            Log("Aplicación iniciada. Bienvenido a Elden Ring Save Manager v4.0.");
 
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
         }
@@ -72,7 +74,7 @@ namespace EldenRingSaveManager
                 {
                     txtRutaVanilla.Text = ofd.FileName;
                     GuardarConfiguracion("RutaVanilla", txtRutaVanilla.Text);
-                    CargarConfiguracionIni(); // Intentar cargar config de seamless automáticamente
+                    CargarConfiguracionIni();
                 }
             }
         }
@@ -89,7 +91,7 @@ namespace EldenRingSaveManager
             }
         }
 
-        // --- Accesos Directos e Iconos Personalizados ---
+        // --- Accesos Directos ---
         private void btnCrearAccesos_Click(object sender, EventArgs e)
         {
             CrearAccesosMetodo(interactivo: true);
@@ -111,15 +113,12 @@ namespace EldenRingSaveManager
                 {
                     DialogResult customIcon = MessageBox.Show("¿Deseas elegir un icono personalizado para Seamless Co-op? (Si marcas No, usará el del juego)", 
                                                              "Icono Personalizado", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                    
                     if (customIcon == DialogResult.Cancel) return;
-                    
                     if (customIcon == DialogResult.Yes)
                     {
                         using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Icono (*.ico)|*.ico" })
                         {
-                            if (ofd.ShowDialog() == DialogResult.OK)
-                                iconCoop = ofd.FileName;
+                            if (ofd.ShowDialog() == DialogResult.OK) iconCoop = ofd.FileName;
                         }
                     }
                 }
@@ -141,17 +140,13 @@ namespace EldenRingSaveManager
         {
             isUpdatingProfiles = true;
             cmbPerfiles.Items.Clear();
-            
             string perfilesStr = ConfigurationManager.AppSettings["Perfiles"] ?? "Predeterminado";
             string[] perfiles = perfilesStr.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
-            
             foreach (var p in perfiles) cmbPerfiles.Items.Add(p);
             
             string actual = ConfigurationManager.AppSettings["PerfilActual"] ?? "Predeterminado";
-            if (cmbPerfiles.Items.Contains(actual))
-                cmbPerfiles.SelectedItem = actual;
-            else if (cmbPerfiles.Items.Count > 0)
-                cmbPerfiles.SelectedIndex = 0;
+            if (cmbPerfiles.Items.Contains(actual)) cmbPerfiles.SelectedItem = actual;
+            else if (cmbPerfiles.Items.Count > 0) cmbPerfiles.SelectedIndex = 0;
                 
             isUpdatingProfiles = false;
         }
@@ -159,7 +154,6 @@ namespace EldenRingSaveManager
         private void cmbPerfiles_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (isUpdatingProfiles || string.IsNullOrEmpty(txtRutaPartidas.Text)) return;
-            
             string perfilNuevo = cmbPerfiles.SelectedItem.ToString();
             string perfilAnterior = ConfigurationManager.AppSettings["PerfilActual"];
             
@@ -171,10 +165,7 @@ namespace EldenRingSaveManager
                     GuardarConfiguracion("PerfilActual", perfilNuevo);
                     Log($"Perfil cambiado de {perfilAnterior} a {perfilNuevo}. Archivos rotados.");
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error al rotar perfiles: {ex.Message}");
-                }
+                catch (Exception ex) { MessageBox.Show($"Error al rotar perfiles: {ex.Message}"); }
             }
         }
 
@@ -194,11 +185,7 @@ namespace EldenRingSaveManager
 
         private string MostrarInputBox(string texto, string caption)
         {
-            Form prompt = new Form()
-            {
-                Width = 400, Height = 150, FormBorderStyle = FormBorderStyle.FixedDialog,
-                Text = caption, StartPosition = FormStartPosition.CenterScreen
-            };
+            Form prompt = new Form() { Width = 400, Height = 150, FormBorderStyle = FormBorderStyle.FixedDialog, Text = caption, StartPosition = FormStartPosition.CenterScreen };
             Label txt = new Label() { Left = 20, Top = 20, Width = 340, Text = texto };
             TextBox box = new TextBox() { Left = 20, Top = 50, Width = 340 };
             Button confirm = new Button() { Text = "Aceptar", Left = 260, Top = 80, Width = 100, DialogResult = DialogResult.OK };
@@ -218,7 +205,6 @@ namespace EldenRingSaveManager
 
             DialogResult res = MessageBox.Show($"¿Deseas descargar de GitHub e instalar/actualizar Seamless Co-op automáticamente en {Path.GetDirectoryName(txtRutaVanilla.Text)}?",
                                                "Instalar Mod", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            
             if (res != DialogResult.Yes) return;
 
             Log("Iniciando instalación automática de Seamless Co-op...");
@@ -227,7 +213,6 @@ namespace EldenRingSaveManager
             try
             {
                 string launcherPath = await ModInstaller.InstalarActualizacionAsync(txtRutaVanilla.Text);
-                
                 txtRutaSeamless.Text = launcherPath;
                 GuardarConfiguracion("RutaSeamless", launcherPath);
                 
@@ -241,72 +226,130 @@ namespace EldenRingSaveManager
                 Log($"Error al instalar: {ex.Message}");
                 MessageBox.Show($"Fallo conectando a GitHub o extrayendo: {ex.Message}", "Error de Instalación", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            finally
-            {
-                btnActualizador.Enabled = true;
-            }
+            finally { btnActualizador.Enabled = true; }
         }
 
         private void btnLimpiarCache_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(txtRutaVanilla.Text)) return;
-            DialogResult res = MessageBox.Show("¿Limpiar archivos temporales de crash (.mdmp)?", "Limpieza", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (res == DialogResult.Yes)
+            if (MessageBox.Show("¿Limpiar archivos temporales de crash (.mdmp)?", "Limpieza", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
                 SaveFileManager.LimpiarTemporales(txtRutaVanilla.Text);
                 Log("Limpieza de crash dumps ejecutada.");
             }
         }
 
-        // --- Editor de Configuración (Tab 2) ---
+        // --- Mapeo Dinámico de INI ---
         private void TabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (tabControl1.SelectedTab == tabSeamlessConfig)
-            {
-                CargarConfiguracionIni();
-            }
+            if (tabControl1.SelectedTab == tabSeamlessConfig) CargarConfiguracionIni();
         }
 
         private void btnRecargarIni_Click(object sender, EventArgs e)
         {
             CargarConfiguracionIni();
-            Log("Archivo .ini recargado manualmente.");
+            Log("Mapeo de INI recargado.");
         }
 
-        private void btnGuardarIni_Click(object sender, EventArgs e)
+        private void btnModoExperto_Click(object sender, EventArgs e)
         {
-            string iniPath = CurrentIniPath;
-            if (string.IsNullOrEmpty(iniPath)) return;
-
-            try
-            {
-                File.WriteAllText(iniPath, txtSeamlessIni.Text);
-                MessageBox.Show("Configuración del mod guardada con éxito.", "Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                Log("ersc_settings.ini modificado y guardado el disco.");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al guardar: {ex.Message}", "Fallo de I/O", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Log($"Fallo modificando INI: {ex.Message}");
-            }
+            txtSeamlessIni.Visible = !txtSeamlessIni.Visible;
+            dgvConfig.Visible = !txtSeamlessIni.Visible;
+            btnModoExperto.Text = txtSeamlessIni.Visible ? "Toggle Formulario (Visual)" : "Toggle Modo Experto (Texto)";
         }
 
         private void CargarConfiguracionIni()
         {
             string iniPath = CurrentIniPath;
+            dgvConfig.Rows.Clear();
+            txtSeamlessIni.Clear();
+
             if (string.IsNullOrEmpty(iniPath))
             {
-                txtSeamlessIni.Text = "Ruta de instalación Vanilla no configurada. No se sabe dónde buscar el mod.";
+                txtSeamlessIni.Text = "Ruta Base Vanilla no fijada.";
                 return;
             }
 
-            if (File.Exists(iniPath))
+            if (!File.Exists(iniPath))
             {
-                txtSeamlessIni.Text = File.ReadAllText(iniPath);
+                txtSeamlessIni.Text = "No se encontró el archivo ersc_settings.ini.";
+                return;
             }
-            else
+
+            // Mapeo Inteligente
+            string[] lineas = File.ReadAllLines(iniPath);
+            txtSeamlessIni.Text = string.Join(Environment.NewLine, lineas); // Respaldo para la caja de texto avanzado
+
+            foreach (var l in lineas)
             {
-                txtSeamlessIni.Text = "El archivo ersc_settings.ini no se encontró. Quizá el mod no se ha ejecutado por primera vez o no está instalado en esa ruta.";
+                string linea = l.Trim();
+                if (string.IsNullOrWhiteSpace(linea) || linea.StartsWith(";") || linea.StartsWith("#") || linea.StartsWith("["))
+                    continue;
+
+                int idx = linea.IndexOf('=');
+                if (idx > 0)
+                {
+                    string k = linea.Substring(0, idx).Trim();
+                    string v = linea.Substring(idx + 1).Trim();
+                    dgvConfig.Rows.Add(k, v);
+                }
+            }
+        }
+
+        private void btnGuardarIni_Click(object sender, EventArgs e)
+        {
+            string iniPath = CurrentIniPath;
+            if (string.IsNullOrEmpty(iniPath) || !File.Exists(iniPath)) return;
+
+            try
+            {
+                if (txtSeamlessIni.Visible)
+                {
+                    // Estamos en modo experto, guardar todo crudo.
+                    File.WriteAllText(iniPath, txtSeamlessIni.Text);
+                }
+                else
+                {
+                    // Guardado inteligente: Extraer el datagridview y reemplazar solo los valores que coincidan sin romper lineas.
+                    var gridValores = new Dictionary<string, string>();
+                    foreach (DataGridViewRow row in dgvConfig.Rows)
+                    {
+                        if (row.Cells[0].Value != null)
+                            gridValores[row.Cells[0].Value.ToString()] = row.Cells[1].Value?.ToString() ?? "";
+                    }
+
+                    string[] lineasOriginales = File.ReadAllLines(iniPath);
+                    for (int i = 0; i < lineasOriginales.Length; i++)
+                    {
+                        string l = lineasOriginales[i].Trim();
+                        if (string.IsNullOrWhiteSpace(l) || l.StartsWith(";") || l.StartsWith("#") || l.StartsWith("["))
+                            continue;
+
+                        int idx = l.IndexOf('=');
+                        if (idx > 0)
+                        {
+                            string keyOriginal = l.Substring(0, idx).Trim();
+                            if (gridValores.ContainsKey(keyOriginal))
+                            {
+                                // Respetamos los espacios usando la llave original pero incrustando el nuevo valor del DataGridView
+                                // Intentaremos reconstruir de manera simple
+                                lineasOriginales[i] = $"{keyOriginal} = {gridValores[keyOriginal]}";
+                            }
+                        }
+                    }
+                    File.WriteAllLines(iniPath, lineasOriginales);
+                }
+                
+                MessageBox.Show("Variables de Seamless modificadas con éxito.", "Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Log("Archivo INI estructurado fue guardado cuidando sus comentarios originales.");
+                
+                // Recargar para sincronizar vista experta y tabla
+                CargarConfiguracionIni();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar el INI: {ex.Message}", "Fallo de I/O", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log($"Fallo modificando INI: {ex.Message}");
             }
         }
 
