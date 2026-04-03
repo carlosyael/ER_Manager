@@ -23,9 +23,9 @@ namespace EldenRingSaveManager
 
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
-            txtRutaPartidas.Text = ConfigurationManager.AppSettings["RutaPartidas"] ?? string.Empty;
-            txtRutaVanilla.Text = ConfigurationManager.AppSettings["RutaVanilla"] ?? string.Empty;
-            txtRutaSeamless.Text = ConfigurationManager.AppSettings["RutaSeamless"] ?? string.Empty;
+            txtRutaPartidas.Text = ConfigHelper.GetSetting("RutaPartidas") ?? string.Empty;
+            txtRutaVanilla.Text = ConfigHelper.GetSetting("RutaVanilla") ?? string.Empty;
+            txtRutaSeamless.Text = ConfigHelper.GetSetting("RutaSeamless") ?? string.Empty;
 
             CargarPerfiles();
             ActualizarEstado();
@@ -140,11 +140,11 @@ namespace EldenRingSaveManager
         {
             isUpdatingProfiles = true;
             cmbPerfiles.Items.Clear();
-            string perfilesStr = ConfigurationManager.AppSettings["Perfiles"] ?? "Predeterminado";
+            string perfilesStr = ConfigHelper.GetSetting("Perfiles") ?? "Predeterminado";
             string[] perfiles = perfilesStr.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var p in perfiles) cmbPerfiles.Items.Add(p);
             
-            string actual = ConfigurationManager.AppSettings["PerfilActual"] ?? "Predeterminado";
+            string actual = ConfigHelper.GetSetting("PerfilActual") ?? "Predeterminado";
             if (cmbPerfiles.Items.Contains(actual)) cmbPerfiles.SelectedItem = actual;
             else if (cmbPerfiles.Items.Count > 0) cmbPerfiles.SelectedIndex = 0;
                 
@@ -155,7 +155,7 @@ namespace EldenRingSaveManager
         {
             if (isUpdatingProfiles || string.IsNullOrEmpty(txtRutaPartidas.Text)) return;
             string perfilNuevo = cmbPerfiles.SelectedItem.ToString();
-            string perfilAnterior = ConfigurationManager.AppSettings["PerfilActual"];
+            string perfilAnterior = ConfigHelper.GetSetting("PerfilActual");
             
             if (perfilNuevo != perfilAnterior)
             {
@@ -174,7 +174,7 @@ namespace EldenRingSaveManager
             string input = MostrarInputBox("Nombre del nuevo perfil (ej: Coop Con Maria):", "Nuevo Perfil");
             if (!string.IsNullOrWhiteSpace(input) && !cmbPerfiles.Items.Contains(input))
             {
-                string perfilesStr = ConfigurationManager.AppSettings["Perfiles"];
+                string perfilesStr = ConfigHelper.GetSetting("Perfiles");
                 string perfiles = string.IsNullOrEmpty(perfilesStr) ? input : perfilesStr + "|" + input;
                 GuardarConfiguracion("Perfiles", perfiles);
                 CargarPerfiles();
@@ -369,15 +369,7 @@ namespace EldenRingSaveManager
 
         private void GuardarConfiguracion(string key, string value)
         {
-            try
-            {
-                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                if (config.AppSettings.Settings[key] != null) config.AppSettings.Settings[key].Value = value;
-                else config.AppSettings.Settings.Add(key, value);
-                config.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection("appSettings");
-            }
-            catch (Exception ex) { Logger.Write($"Error config {key}: {ex.Message}"); }
+            ConfigHelper.SaveSetting(key, value);
         }
 
         private void Log(string mensaje)

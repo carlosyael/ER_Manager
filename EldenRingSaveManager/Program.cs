@@ -19,9 +19,9 @@ namespace EldenRingSaveManager
             {
                 string argumento = args[0].ToLowerInvariant();
                 
-                string rutaPartidas = ConfigurationManager.AppSettings["RutaPartidas"];
-                string rutaVanilla = ConfigurationManager.AppSettings["RutaVanilla"];
-                string rutaSeamless = ConfigurationManager.AppSettings["RutaSeamless"];
+                string rutaPartidas = ConfigHelper.GetSetting("RutaPartidas");
+                string rutaVanilla = ConfigHelper.GetSetting("RutaVanilla");
+                string rutaSeamless = ConfigHelper.GetSetting("RutaSeamless");
 
                 Logger.Write($"[CLI] Iniciando con argumento {argumento}");
 

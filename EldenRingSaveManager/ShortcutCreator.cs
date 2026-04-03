@@ -17,15 +17,8 @@ namespace EldenRingSaveManager
                 dynamic shell = Activator.CreateInstance(t);
                 dynamic shortcut = shell.CreateShortcut(rutaLink);
 
-                // El acceso directo debe apuntar al .exe de esta aplicación C#
-                string appExe = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                
-                // En .NET Core/.NET 8, GetExecutingAssembly().Location puede devolver el archivo .dll
-                // Por lo tanto, lo cambiamos a .exe para asegurar que inicie correctamente
-                if (appExe.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-                {
-                    appExe = appExe.Substring(0, appExe.Length - 4) + ".exe";
-                }
+                // El acceso directo debe apuntar al .exe de esta aplicación C# de modo seguro en net8
+                string appExe = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
 
                 shortcut.TargetPath = appExe;
                 shortcut.Arguments = argumentoCommandLine;
