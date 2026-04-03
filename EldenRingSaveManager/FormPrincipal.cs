@@ -2,14 +2,17 @@ using System;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 
 namespace EldenRingSaveManager
 {
     public partial class FormPrincipal : Form
     {
         private bool isUpdatingProfiles = false;
+        private string CurrentIniPath => !string.IsNullOrEmpty(txtRutaVanilla.Text) 
+            ? Path.Combine(Path.GetDirectoryName(txtRutaVanilla.Text), "SeamlessCoop", "ersc_settings.ini")
+            : string.Empty;
 
         public FormPrincipal()
         {
@@ -25,8 +28,10 @@ namespace EldenRingSaveManager
             CargarPerfiles();
             ActualizarEstado();
             
-            Logger.Write("[GUI] UI Iniciada correctamente.");
-            Log("Aplicación iniciada. Bienvenido a Elden Ring Save Manager v2.0.");
+            Logger.Write("[GUI] UI Iniciada correctamente. v3.0");
+            Log("Aplicación iniciada. Bienvenido a Elden Ring Save Manager v3.0.");
+
+            tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
         }
 
         // --- Gestión de Configuración Base ---
@@ -67,6 +72,7 @@ namespace EldenRingSaveManager
                 {
                     txtRutaVanilla.Text = ofd.FileName;
                     GuardarConfiguracion("RutaVanilla", txtRutaVanilla.Text);
+                    CargarConfiguracionIni(); // Intentar cargar config de seamless automáticamente
                 }
             }
         }
@@ -86,9 +92,14 @@ namespace EldenRingSaveManager
         // --- Accesos Directos e Iconos Personalizados ---
         private void btnCrearAccesos_Click(object sender, EventArgs e)
         {
+            CrearAccesosMetodo(interactivo: true);
+        }
+
+        private void CrearAccesosMetodo(bool interactivo)
+        {
             if (string.IsNullOrEmpty(txtRutaPartidas.Text) || string.IsNullOrEmpty(txtRutaVanilla.Text) || string.IsNullOrEmpty(txtRutaSeamless.Text))
             {
-                MessageBox.Show("Faltan rutas por configurar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (interactivo) MessageBox.Show("Faltan rutas por configurar antes de crear los accesos.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -96,18 +107,19 @@ namespace EldenRingSaveManager
             {
                 string iconCoop = txtRutaSeamless.Text.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) ? txtRutaVanilla.Text : txtRutaSeamless.Text;
                 
-                DialogResult customIcon = MessageBox.Show("¿Deseas elegir un icono personalizado para Seamless Co-op? (Si marcas No, usará el del juego)", 
-                                                         "Icono Personalizado", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                
-                if (customIcon == DialogResult.Cancel) return;
-                
-                if (customIcon == DialogResult.Yes)
+                if (interactivo)
                 {
-                    using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Icono (*.ico)|*.ico" })
+                    DialogResult customIcon = MessageBox.Show("¿Deseas elegir un icono personalizado para Seamless Co-op? (Si marcas No, usará el del juego)", 
+                                                             "Icono Personalizado", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                    
+                    if (customIcon == DialogResult.Cancel) return;
+                    
+                    if (customIcon == DialogResult.Yes)
                     {
-                        if (ofd.ShowDialog() == DialogResult.OK)
+                        using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Icono (*.ico)|*.ico" })
                         {
-                            iconCoop = ofd.FileName;
+                            if (ofd.ShowDialog() == DialogResult.OK)
+                                iconCoop = ofd.FileName;
                         }
                     }
                 }
@@ -115,7 +127,7 @@ namespace EldenRingSaveManager
                 ShortcutCreator.CrearAccesoDirecto("ER - Vanilla", "-launch_vanilla", txtRutaVanilla.Text, txtRutaVanilla.Text);
                 ShortcutCreator.CrearAccesoDirecto("ER - Seamless Co-op", "-launch_seamless", txtRutaSeamless.Text, iconCoop);
 
-                MessageBox.Show("Accesos directos creados.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (interactivo) MessageBox.Show("Accesos directos creados.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Log("Accesos directos creados con éxito.");
             }
             catch (Exception ex)
@@ -157,7 +169,7 @@ namespace EldenRingSaveManager
                 {
                     SaveFileManager.AplicarPerfil(txtRutaPartidas.Text, perfilAnterior, perfilNuevo);
                     GuardarConfiguracion("PerfilActual", perfilNuevo);
-                    Log($"Perfil cambiado de {perfilAnterior} a {perfilNuevo}. Archivos .co2 rotados.");
+                    Log($"Perfil cambiado de {perfilAnterior} a {perfilNuevo}. Archivos rotados.");
                 }
                 catch (Exception ex)
                 {
@@ -195,28 +207,106 @@ namespace EldenRingSaveManager
             return prompt.ShowDialog() == DialogResult.OK ? box.Text : "";
         }
 
-        // --- Mantenimiento ---
-        private void btnActualizador_Click(object sender, EventArgs e)
+        // --- Instalador ---
+        private async void btnActualizador_Click(object sender, EventArgs e)
         {
-            Log("Abriendo la página oficial de GitHub para actualizaciones de Seamless Co-op...");
-            Process.Start(new ProcessStartInfo("https://github.com/LukeYui/EldenRingSeamlessCoopRelease/releases") { UseShellExecute = true });
+            if (string.IsNullOrEmpty(txtRutaVanilla.Text))
+            {
+                MessageBox.Show("Por favor, selecciona primero tu eldenring.exe (Vanilla) para saber dónde instalar el mod.", "Ruta Necesaria", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            DialogResult res = MessageBox.Show($"¿Deseas descargar de GitHub e instalar/actualizar Seamless Co-op automáticamente en {Path.GetDirectoryName(txtRutaVanilla.Text)}?",
+                                               "Instalar Mod", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            
+            if (res != DialogResult.Yes) return;
+
+            Log("Iniciando instalación automática de Seamless Co-op...");
+            btnActualizador.Enabled = false;
+
+            try
+            {
+                string launcherPath = await ModInstaller.InstalarActualizacionAsync(txtRutaVanilla.Text);
+                
+                txtRutaSeamless.Text = launcherPath;
+                GuardarConfiguracion("RutaSeamless", launcherPath);
+                
+                Log("Creando accesos directos actualizados automáticamente...");
+                CrearAccesosMetodo(interactivo: false);
+
+                MessageBox.Show("¡Instalación completada con éxito! Archivos descomprimidos y acceso directo actualizado.", "Completado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                Log($"Error al instalar: {ex.Message}");
+                MessageBox.Show($"Fallo conectando a GitHub o extrayendo: {ex.Message}", "Error de Instalación", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnActualizador.Enabled = true;
+            }
         }
 
         private void btnLimpiarCache_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(txtRutaVanilla.Text))
-            {
-                MessageBox.Show("Por favor, selecciona primero el ejecutable Vanilla para conocer la ruta de instalación.", "Ruta no configurada");
-                return;
-            }
-
-            DialogResult res = MessageBox.Show("¿Deseas limpiar archivos temporales de crash (.mdmp) del directorio de Elden Ring para intentar corregir errores de inicio?", 
-                                               "Limpieza", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (string.IsNullOrEmpty(txtRutaVanilla.Text)) return;
+            DialogResult res = MessageBox.Show("¿Limpiar archivos temporales de crash (.mdmp)?", "Limpieza", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (res == DialogResult.Yes)
             {
                 SaveFileManager.LimpiarTemporales(txtRutaVanilla.Text);
-                Log("Limpieza de crash dumps y temporales ejecutada.");
-                MessageBox.Show("Limpieza finalizada.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Log("Limpieza de crash dumps ejecutada.");
+            }
+        }
+
+        // --- Editor de Configuración (Tab 2) ---
+        private void TabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (tabControl1.SelectedTab == tabSeamlessConfig)
+            {
+                CargarConfiguracionIni();
+            }
+        }
+
+        private void btnRecargarIni_Click(object sender, EventArgs e)
+        {
+            CargarConfiguracionIni();
+            Log("Archivo .ini recargado manualmente.");
+        }
+
+        private void btnGuardarIni_Click(object sender, EventArgs e)
+        {
+            string iniPath = CurrentIniPath;
+            if (string.IsNullOrEmpty(iniPath)) return;
+
+            try
+            {
+                File.WriteAllText(iniPath, txtSeamlessIni.Text);
+                MessageBox.Show("Configuración del mod guardada con éxito.", "Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Log("ersc_settings.ini modificado y guardado el disco.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar: {ex.Message}", "Fallo de I/O", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log($"Fallo modificando INI: {ex.Message}");
+            }
+        }
+
+        private void CargarConfiguracionIni()
+        {
+            string iniPath = CurrentIniPath;
+            if (string.IsNullOrEmpty(iniPath))
+            {
+                txtSeamlessIni.Text = "Ruta de instalación Vanilla no configurada. No se sabe dónde buscar el mod.";
+                return;
+            }
+
+            if (File.Exists(iniPath))
+            {
+                txtSeamlessIni.Text = File.ReadAllText(iniPath);
+            }
+            else
+            {
+                txtSeamlessIni.Text = "El archivo ersc_settings.ini no se encontró. Quizá el mod no se ha ejecutado por primera vez o no está instalado en esa ruta.";
             }
         }
 
@@ -227,22 +317,10 @@ namespace EldenRingSaveManager
             
             switch (estado)
             {
-                case EstadoPartida.Vanilla:
-                    lblEstado.Text = "Estado actual: Vanilla (.sl2)";
-                    lblEstado.ForeColor = System.Drawing.Color.DodgerBlue;
-                    break;
-                case EstadoPartida.Seamless:
-                    lblEstado.Text = "Estado actual: Seamless (.co2)";
-                    lblEstado.ForeColor = System.Drawing.Color.Goldenrod;
-                    break;
-                case EstadoPartida.Mixto:
-                    lblEstado.Text = "Estado actual: Mixto (Riesgo de pérdida)";
-                    lblEstado.ForeColor = System.Drawing.Color.Crimson;
-                    break;
-                case EstadoPartida.Desconocido:
-                    lblEstado.Text = "Estado actual: Desconocido";
-                    lblEstado.ForeColor = System.Drawing.Color.Gray;
-                    break;
+                case EstadoPartida.Vanilla: lblEstado.Text = "Estado actual: Vanilla (.sl2)"; lblEstado.ForeColor = System.Drawing.Color.DodgerBlue; break;
+                case EstadoPartida.Seamless: lblEstado.Text = "Estado actual: Seamless (.co2)"; lblEstado.ForeColor = System.Drawing.Color.Goldenrod; break;
+                case EstadoPartida.Mixto: lblEstado.Text = "Estado: Mixto (Riesgo pérdida)"; lblEstado.ForeColor = System.Drawing.Color.Crimson; break;
+                case EstadoPartida.Desconocido: lblEstado.Text = "Estado actual: Desconocido"; lblEstado.ForeColor = System.Drawing.Color.Gray; break;
             }
         }
 
@@ -262,11 +340,7 @@ namespace EldenRingSaveManager
         private void Log(string mensaje)
         {
             Logger.Write($"[GUI] {mensaje}");
-            if (txtLogs.InvokeRequired)
-            {
-                txtLogs.Invoke(new Action(() => Log(mensaje)));
-                return;
-            }
+            if (txtLogs.InvokeRequired) { txtLogs.Invoke(new Action(() => Log(mensaje))); return; }
             txtLogs.AppendText($"[{DateTime.Now:HH:mm:ss}] {mensaje}{Environment.NewLine}");
         }
     }

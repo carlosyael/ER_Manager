@@ -15,6 +15,8 @@ namespace EldenRingSaveManager
 
         private void InitializeComponent()
         {
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabGeneral = new System.Windows.Forms.TabPage();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.btnNuevoPerfil = new System.Windows.Forms.Button();
             this.cmbPerfiles = new System.Windows.Forms.ComboBox();
@@ -36,11 +38,43 @@ namespace EldenRingSaveManager
             this.btnCrearAccesos = new System.Windows.Forms.Button();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.txtLogs = new System.Windows.Forms.TextBox();
+            this.tabSeamlessConfig = new System.Windows.Forms.TabPage();
+            this.btnGuardarIni = new System.Windows.Forms.Button();
+            this.btnRecargarIni = new System.Windows.Forms.Button();
+            this.txtSeamlessIni = new System.Windows.Forms.TextBox();
+            this.tabControl1.SuspendLayout();
+            this.tabGeneral.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox4.SuspendLayout();
             this.groupBox3.SuspendLayout();
+            this.tabSeamlessConfig.SuspendLayout();
             this.SuspendLayout();
+            
+            // tabControl1
+            this.tabControl1.Controls.Add(this.tabGeneral);
+            this.tabControl1.Controls.Add(this.tabSeamlessConfig);
+            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl1.Location = new System.Drawing.Point(0, 0);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(624, 501);
+            this.tabControl1.TabIndex = 0;
+            
+            // tabGeneral
+            this.tabGeneral.Controls.Add(this.groupBox1);
+            this.tabGeneral.Controls.Add(this.groupBox2);
+            this.tabGeneral.Controls.Add(this.groupBox4);
+            this.tabGeneral.Controls.Add(this.lblEstado);
+            this.tabGeneral.Controls.Add(this.btnCrearAccesos);
+            this.tabGeneral.Controls.Add(this.groupBox3);
+            this.tabGeneral.Location = new System.Drawing.Point(4, 24);
+            this.tabGeneral.Name = "tabGeneral";
+            this.tabGeneral.Padding = new System.Windows.Forms.Padding(3);
+            this.tabGeneral.Size = new System.Drawing.Size(616, 473);
+            this.tabGeneral.TabIndex = 0;
+            this.tabGeneral.Text = "Lanzador & Perfiles";
+            this.tabGeneral.UseVisualStyleBackColor = true;
             
             // groupBox1
             this.groupBox1.Controls.Add(this.btnNuevoPerfil);
@@ -49,9 +83,9 @@ namespace EldenRingSaveManager
             this.groupBox1.Controls.Add(this.btnAutodetectar);
             this.groupBox1.Controls.Add(this.btnSeleccionarPartidas);
             this.groupBox1.Controls.Add(this.txtRutaPartidas);
-            this.groupBox1.Location = new System.Drawing.Point(12, 12);
+            this.groupBox1.Location = new System.Drawing.Point(6, 6);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(600, 100);
+            this.groupBox1.Size = new System.Drawing.Size(600, 95);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Ruta de Partidas Guardadas y Perfiles";
@@ -114,7 +148,7 @@ namespace EldenRingSaveManager
             this.groupBox2.Controls.Add(this.btnSeleccionarVanilla);
             this.groupBox2.Controls.Add(this.txtRutaVanilla);
             this.groupBox2.Controls.Add(this.label1);
-            this.groupBox2.Location = new System.Drawing.Point(12, 120);
+            this.groupBox2.Location = new System.Drawing.Point(6, 110);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(600, 95);
             this.groupBox2.TabIndex = 1;
@@ -172,7 +206,7 @@ namespace EldenRingSaveManager
             // groupBox4
             this.groupBox4.Controls.Add(this.btnLimpiarCache);
             this.groupBox4.Controls.Add(this.btnActualizador);
-            this.groupBox4.Location = new System.Drawing.Point(12, 225);
+            this.groupBox4.Location = new System.Drawing.Point(6, 215);
             this.groupBox4.Name = "groupBox4";
             this.groupBox4.Size = new System.Drawing.Size(260, 95);
             this.groupBox4.TabIndex = 5;
@@ -184,7 +218,7 @@ namespace EldenRingSaveManager
             this.btnActualizador.Name = "btnActualizador";
             this.btnActualizador.Size = new System.Drawing.Size(230, 26);
             this.btnActualizador.TabIndex = 0;
-            this.btnActualizador.Text = "Buscar Act. Seamless Co-op (Web)";
+            this.btnActualizador.Text = "Descargar/Act. Seamless Co-op";
             this.btnActualizador.UseVisualStyleBackColor = true;
             this.btnActualizador.Click += new System.EventHandler(this.btnActualizador_Click);
             
@@ -193,14 +227,14 @@ namespace EldenRingSaveManager
             this.btnLimpiarCache.Name = "btnLimpiarCache";
             this.btnLimpiarCache.Size = new System.Drawing.Size(230, 26);
             this.btnLimpiarCache.TabIndex = 1;
-            this.btnLimpiarCache.Text = "Limpiar Game Crash Dumps";
+            this.btnLimpiarCache.Text = "Limpiar Crash Dumps";
             this.btnLimpiarCache.UseVisualStyleBackColor = true;
             this.btnLimpiarCache.Click += new System.EventHandler(this.btnLimpiarCache_Click);
             
             // lblEstado
             this.lblEstado.AutoSize = true;
             this.lblEstado.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.lblEstado.Location = new System.Drawing.Point(300, 235);
+            this.lblEstado.Location = new System.Drawing.Point(280, 225);
             this.lblEstado.Name = "lblEstado";
             this.lblEstado.Size = new System.Drawing.Size(217, 21);
             this.lblEstado.TabIndex = 2;
@@ -208,9 +242,9 @@ namespace EldenRingSaveManager
             
             // btnCrearAccesos
             this.btnCrearAccesos.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.btnCrearAccesos.Location = new System.Drawing.Point(290, 270);
+            this.btnCrearAccesos.Location = new System.Drawing.Point(280, 260);
             this.btnCrearAccesos.Name = "btnCrearAccesos";
-            this.btnCrearAccesos.Size = new System.Drawing.Size(322, 38);
+            this.btnCrearAccesos.Size = new System.Drawing.Size(326, 38);
             this.btnCrearAccesos.TabIndex = 3;
             this.btnCrearAccesos.Text = "Crear Accesos Directos";
             this.btnCrearAccesos.UseVisualStyleBackColor = true;
@@ -218,9 +252,9 @@ namespace EldenRingSaveManager
             
             // groupBox3
             this.groupBox3.Controls.Add(this.txtLogs);
-            this.groupBox3.Location = new System.Drawing.Point(12, 330);
+            this.groupBox3.Location = new System.Drawing.Point(6, 320);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(600, 160);
+            this.groupBox3.Size = new System.Drawing.Size(600, 140);
             this.groupBox3.TabIndex = 4;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Logs de Actividad";
@@ -232,25 +266,63 @@ namespace EldenRingSaveManager
             this.txtLogs.Name = "txtLogs";
             this.txtLogs.ReadOnly = true;
             this.txtLogs.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtLogs.Size = new System.Drawing.Size(594, 138);
+            this.txtLogs.Size = new System.Drawing.Size(594, 118);
             this.txtLogs.TabIndex = 0;
+            
+            // tabSeamlessConfig
+            this.tabSeamlessConfig.Controls.Add(this.btnGuardarIni);
+            this.tabSeamlessConfig.Controls.Add(this.btnRecargarIni);
+            this.tabSeamlessConfig.Controls.Add(this.txtSeamlessIni);
+            this.tabSeamlessConfig.Location = new System.Drawing.Point(4, 24);
+            this.tabSeamlessConfig.Name = "tabSeamlessConfig";
+            this.tabSeamlessConfig.Padding = new System.Windows.Forms.Padding(3);
+            this.tabSeamlessConfig.Size = new System.Drawing.Size(616, 473);
+            this.tabSeamlessConfig.TabIndex = 1;
+            this.tabSeamlessConfig.Text = "Configuración Seamless Co-op";
+            this.tabSeamlessConfig.UseVisualStyleBackColor = true;
+            
+            // txtSeamlessIni
+            this.txtSeamlessIni.Location = new System.Drawing.Point(8, 8);
+            this.txtSeamlessIni.Multiline = true;
+            this.txtSeamlessIni.Name = "txtSeamlessIni";
+            this.txtSeamlessIni.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.txtSeamlessIni.Size = new System.Drawing.Size(600, 420);
+            this.txtSeamlessIni.TabIndex = 0;
+            this.txtSeamlessIni.WordWrap = false;
+            
+            // btnRecargarIni
+            this.btnRecargarIni.Location = new System.Drawing.Point(8, 435);
+            this.btnRecargarIni.Name = "btnRecargarIni";
+            this.btnRecargarIni.Size = new System.Drawing.Size(150, 30);
+            this.btnRecargarIni.TabIndex = 1;
+            this.btnRecargarIni.Text = "Recargar Archivo";
+            this.btnRecargarIni.UseVisualStyleBackColor = true;
+            this.btnRecargarIni.Click += new System.EventHandler(this.btnRecargarIni_Click);
+            
+            // btnGuardarIni
+            this.btnGuardarIni.Location = new System.Drawing.Point(170, 435);
+            this.btnGuardarIni.Name = "btnGuardarIni";
+            this.btnGuardarIni.Size = new System.Drawing.Size(150, 30);
+            this.btnGuardarIni.TabIndex = 2;
+            this.btnGuardarIni.Text = "Guardar Cambios";
+            this.btnGuardarIni.UseVisualStyleBackColor = true;
+            this.btnGuardarIni.Click += new System.EventHandler(this.btnGuardarIni_Click);
             
             // FormPrincipal
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 501);
-            this.Controls.Add(this.groupBox4);
-            this.Controls.Add(this.groupBox3);
-            this.Controls.Add(this.btnCrearAccesos);
-            this.Controls.Add(this.lblEstado);
-            this.Controls.Add(this.groupBox2);
-            this.Controls.Add(this.groupBox1);
+            this.Controls.Add(this.tabControl1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "FormPrincipal";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Elden Ring: Seamless Co-op Save Manager v2.0";
+            this.Text = "Elden Ring: Seamless Co-op Save Manager v3.0";
             this.Load += new System.EventHandler(this.FormPrincipal_Load);
+            
+            this.tabControl1.ResumeLayout(false);
+            this.tabGeneral.ResumeLayout(false);
+            this.tabGeneral.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
@@ -258,10 +330,14 @@ namespace EldenRingSaveManager
             this.groupBox4.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
+            this.tabSeamlessConfig.ResumeLayout(false);
+            this.tabSeamlessConfig.PerformLayout();
             this.ResumeLayout(false);
-            this.PerformLayout();
         }
 
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabGeneral;
+        private System.Windows.Forms.TabPage tabSeamlessConfig;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button btnNuevoPerfil;
         private System.Windows.Forms.ComboBox cmbPerfiles;
@@ -283,5 +359,9 @@ namespace EldenRingSaveManager
         private System.Windows.Forms.Button btnCrearAccesos;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.TextBox txtLogs;
+        
+        private System.Windows.Forms.Button btnGuardarIni;
+        private System.Windows.Forms.Button btnRecargarIni;
+        private System.Windows.Forms.TextBox txtSeamlessIni;
     }
 }
