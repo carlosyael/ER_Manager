@@ -1,83 +1,98 @@
-# 💍 Elden Ring: Seamless Co-op Save Manager & Launcher v4.1
+# 💍 Elden Ring: Seamless Co-op Save Manager & Launcher v5.0
 
-Una herramienta "Todo en Uno" desarrollada en C# (.NET 8 / Windows Forms) diseñada para gestionar automáticamente los archivos de guardado de *Elden Ring*. Permite alternar de forma rápida y segura entre el juego base (Vanilla) y el mod *Seamless Co-op*, con instalación automática del mod, editor de configuración integrado, backups inteligentes y mucho más.
+> 🌍 Also available in: [Español](README.es.md)
 
-## 📖 Sobre el Proyecto
+An all-in-one tool built in C# (.NET 8 / Windows Forms) designed to automatically manage *Elden Ring* save files. It allows you to quickly and safely switch between the base game (Vanilla) and the *Seamless Co-op* mod, with automatic mod installation, built-in configuration editor, smart backups, and much more.
 
-El mod *Seamless Co-op* requiere que los archivos de guardado tengan la extensión `.co2` en lugar del `.sl2` oficial para evitar que el sistema antitrampas (Easy Anti-Cheat) detecte el progreso modificado en los servidores oficiales.
+## 📖 About the Project
 
-Normalmente, los jugadores deben renombrar estos archivos manualmente cada vez que quieren cambiar de modo de juego. Este proyecto automatiza completamente ese proceso mediante una interfaz gráfica sencilla y la creación de accesos directos inteligentes.
+The *Seamless Co-op* mod requires save files to use the `.co2` extension instead of the official `.sl2` to prevent the anti-cheat system (Easy Anti-Cheat) from detecting modified progress on official servers.
 
-## ✨ Funcionalidades
+Normally, players must rename these files manually every time they want to switch game modes. This project fully automates that process through a simple graphical interface and the creation of smart desktop shortcuts.
+
+## ✨ Features
 
 ### Core
-* **⚙️ Conversión Automática de Partidas:** Transforma tus archivos `.sl2` (y `.bak`) a `.co2` y viceversa de forma transparente, reduciendo al mínimo el riesgo de baneos.
-* **🔍 Auto-Detección de Rutas:** Encuentra automáticamente la carpeta de guardado de Elden Ring (`AppData\Roaming\EldenRing\<SteamID>`).
-* **🚀 Modo Híbrido (GUI & CLI):**
-  * **Modo Interfaz Gráfica:** Abre la aplicación normalmente para configurar rutas, perfiles y el mod.
-  * **Modo Silencioso:** Usa los accesos directos del escritorio para ejecutar la transformación en segundo plano, lanzar el juego y cerrarse automáticamente.
-* **🖥️ Generador de Accesos Directos:** Crea iconos dedicados en tu escritorio para "Lanzar Vanilla" o "Lanzar Seamless Co-op", con soporte para iconos personalizados (`.ico`).
-* **🔒 Detección de Steam:** Verifica que Steam esté en ejecución antes de lanzar el juego. Si no lo está, lo inicia automáticamente desde el registro de Windows.
-* **🛡️ Protección Anti-Conflicto:** Impide lanzar el juego si ya hay una instancia de `eldenring.exe` en ejecución.
+* **⚙️ Automatic Save Conversion:** Transforms your `.sl2` (and `.bak`) files to `.co2` and vice versa transparently, minimizing the risk of bans.
+* **🔍 Auto-Detection of Paths:** Automatically finds the Elden Ring save folder (`AppData\Roaming\EldenRing\<SteamID>`).
+* **🚀 Hybrid Mode (GUI & CLI):**
+  * **GUI Mode:** Open the application normally to configure paths, profiles, and the mod.
+  * **Silent Mode:** Use desktop shortcuts to perform the transformation in the background, launch the game, and close automatically.
+* **🖥️ Shortcut Generator:** Creates dedicated icons on your desktop to "Launch Vanilla" or "Launch Seamless Co-op", with support for custom icons (`.ico`).
+* **🔒 Steam Detection:** Checks whether Steam is running before launching the game. If it isn't, it starts it automatically from the Windows registry.
+* **🛡️ Anti-Conflict Protection:** Prevents launching the game if an instance of `eldenring.exe` is already running.
 
-### Backups & Perfiles
-* **💾 Backups Automáticos:** Antes de cada transformación de archivos, se genera un respaldo con fecha y hora en `EldenRing_Backups/`, garantizando que tu progreso nunca se pierda.
-* **👥 Sistema Multi-Perfil Cooperativo:** Crea perfiles aislados para distintas campañas cooperativas (ej: "Coop con María", "Coop Raid"). Cada perfil mantiene sus propios archivos `.co2` separados.
+### Backups & Profiles
+* **💾 Automatic Backups:** Before each file transformation, a timestamped backup is created in `EldenRing_Backups/`, ensuring your progress is never lost.
+* **👥 Multi-Profile Co-op System:** Create isolated profiles for different co-op campaigns (e.g., "Coop with Maria", "Coop Raid"). Each profile maintains its own separate `.co2` files.
 
-### Instalador & Configuración del Mod
-* **📥 Instalador Automático desde GitHub:** Descarga e instala/actualiza *Seamless Co-op* directamente desde la [releases de LukeYui](https://github.com/LukeYui/EldenRingSeamlessCoopRelease/releases) con un solo clic. Preserva tu archivo de configuración `ersc_settings.ini` existente durante la actualización.
-* **📝 Editor de Configuración INI Dinámico:** Pestaña integrada que lee dinámicamente el archivo `ersc_settings.ini` y lo presenta en una cuadrícula editable (Ajuste / Valor). Los cambios se guardan de forma quirúrgica, respetando los comentarios y la estructura original del archivo.
-* **🔧 Modo Experto:** Botón toggle para alternar entre la vista de formulario visual y el modo de texto plano para usuarios avanzados.
+### Mod Installer & Configuration
+* **📥 Automatic Installer from GitHub:** Downloads and installs/updates *Seamless Co-op* directly from [LukeYui's releases](https://github.com/LukeYui/EldenRingSeamlessCoopRelease/releases) with a single click. Preserves your existing `ersc_settings.ini` configuration file during updates.
+* **📝 Dynamic INI Configuration Editor:** Built-in tab that dynamically reads the `ersc_settings.ini` file and presents it in an editable grid (Setting / Value). Changes are saved surgically, respecting the original comments and file structure.
+* **🔧 Expert Mode:** Toggle button to switch between the visual form view and plain text mode for advanced users.
 
-### Mantenimiento
-* **🧹 Limpiador de Crash Dumps:** Elimina archivos temporales de crasheo (`.mdmp`, `.tmp`) que se acumulan en la carpeta del juego.
-* **📋 Registro de Actividad (Logs):** Toda la actividad queda registrada visualmente en la interfaz y persistida en `app.log`.
+### Settings & Localization
+* **🌍 Multi-Language Support:** Switch between English and Spanish from the Settings tab. The interface updates instantly.
+* **🎨 Theme Selection:** Light and Dark theme options (Dark theme coming soon).
+* **🎮 Game Version Selector:** Prepared for future Dark Souls Remastered and Dark Souls III support.
+* **🔄 Auto-Updater:** Automatically checks for new versions on startup and allows one-click updates from GitHub Releases.
 
-## 🚀 Cómo Usar
+### Maintenance
+* **🧹 Crash Dump Cleaner:** Removes temporary crash files (`.mdmp`, `.tmp`) that accumulate in the game folder.
+* **📋 Activity Log:** All activity is visually logged in the interface and persisted in `app.log`.
 
-1. **Descarga** la última versión del `.exe` desde la pestaña de [Releases](https://github.com/carlosyael/ER_Manager/releases).
-   > ⚠️ El archivo pesa ~154 MB porque incluye el runtime de .NET embebido. **No necesitas instalar nada adicional.**
-2. **Ejecuta** `EldenRingSaveManager.exe`.
-3. Haz clic en **"Autodetectar"** para encontrar tu carpeta de guardados o selecciónala manualmente.
-4. Selecciona la ruta de tu `eldenring.exe` (Vanilla).
-5. *(Opcional)* Haz clic en **"Descargar/Act. Seamless Co-op"** para instalar el mod automáticamente.
-6. Haz clic en **"Crear Accesos Directos"** para generar los lanzadores en tu escritorio.
-7. ¡Listo! Usa los accesos directos de tu escritorio para jugar al modo que prefieras.
+## 🚀 How to Use
 
-### Pestaña de Configuración
-1. Navega a la pestaña **"Configuración Seamless Co-op"**.
-2. Edita cualquier parámetro directamente en la cuadrícula (contraseña, invasiones, escalado, etc.).
-3. Pulsa **"Guardar Cambios"** — el archivo original se modifica sin perder comentarios ni estructura.
+1. **Download** the latest `.exe` from the [Releases](https://github.com/carlosyael/ER_Manager/releases) tab.
+   > ⚠️ The file is ~154 MB because it includes the embedded .NET runtime. **You don't need to install anything additional.**
+2. **Run** `EldenRingSaveManager.exe`.
+3. Click **"Autodetect"** to find your save folder or select it manually.
+4. Select the path to your `eldenring.exe` (Vanilla).
+5. *(Optional)* Click **"Download/Update Seamless Co-op"** to install the mod automatically.
+6. Click **"Create Desktop Shortcuts"** to generate the launchers on your desktop.
+7. You're all set! Use the desktop shortcuts to play whichever mode you prefer.
 
-## 🛠️ Tecnologías
+### Configuration Tab
+1. Navigate to the **"Seamless Co-op Config"** tab.
+2. Edit any parameter directly in the grid (password, invasions, scaling, etc.).
+3. Click **"Save Changes"** — the original file is modified without losing comments or structure.
 
-* **Lenguaje:** C# (.NET 8)
+### Settings Tab
+1. Navigate to the **"Settings"** tab.
+2. Change the **Language** between English and Español.
+3. View the current version and **Check for Updates** from GitHub.
+
+## 🛠️ Technologies
+
+* **Language:** C# (.NET 8)
 * **UI:** Windows Forms (WinForms)
-* **Persistencia:** JSON (`config.json`) — compatible con apps Single-File
-* **Red:** `HttpClient` + GitHub REST API v3
-* **Compresión:** `System.IO.Compression` para extracción inteligente de ZIPs
-* **Shortcuts:** `WScript.Shell` COM dinámico para creación nativa de `.lnk`
-* **Distribución:** Ejecutable único portable (`PublishSingleFile`, self-contained, win-x64)
+* **Persistence:** JSON (`config.json`) — compatible with Single-File apps
+* **Networking:** `HttpClient` + GitHub REST API v3
+* **Compression:** `System.IO.Compression` for smart ZIP extraction
+* **Shortcuts:** `WScript.Shell` dynamic COM for native `.lnk` creation
+* **Distribution:** Portable single-file executable (`PublishSingleFile`, self-contained, win-x64)
 
-## 📁 Estructura del Proyecto
+## 📁 Project Structure
 
 ```
 EldenRingSaveManager/
-├── Program.cs                  # Punto de entrada (CLI/GUI routing + crash handlers)
-├── FormPrincipal.cs            # Lógica de la interfaz (perfiles, instalador, editor INI)
-├── FormPrincipal.Designer.cs   # Layout de la UI (TabControl, DataGridView, controles)
-├── SaveFileManager.cs          # Backups, transformación .sl2↔.co2, perfiles, limpieza
-├── ModInstaller.cs             # Descarga de GitHub API + extracción inteligente de ZIP
-├── ShortcutCreator.cs          # Creador de accesos directos .lnk
-├── ConfigHelper.cs             # Persistencia de configuración en config.json
-├── Logger.cs                   # Registro de actividad en app.log
-└── EldenRingSaveManager.csproj # Proyecto .NET 8 WinForms
+├── Program.cs                  # Entry point (CLI/GUI routing + crash handlers)
+├── FormPrincipal.cs            # UI logic (profiles, installer, INI editor, settings)
+├── FormPrincipal.Designer.cs   # UI layout (TabControl, DataGridView, controls)
+├── SaveFileManager.cs          # Backups, .sl2↔.co2 transformation, profiles, cleanup
+├── ModInstaller.cs             # GitHub API download + smart ZIP extraction
+├── AppUpdater.cs               # Self-update checker via GitHub Releases
+├── LocalizationManager.cs      # Multi-language i18n system (en/es)
+├── ShortcutCreator.cs          # Desktop shortcut (.lnk) creator
+├── ConfigHelper.cs             # Configuration persistence in config.json
+├── Logger.cs                   # Activity logging to app.log
+└── EldenRingSaveManager.csproj  # .NET 8 WinForms project
 ```
 
-## 👨‍💻 Autor
+## 👨‍💻 Author
 
-Desarrollado por **Carlos Yael De Los Santos Zorrilla**.
+Developed by **Carlos Yael De Los Santos Zorrilla**.
 
-## ⚠️ Descargo de Responsabilidad
+## ⚠️ Disclaimer
 
-Este proyecto es una herramienta de código abierto creada por fans. No está afiliada, asociada, autorizada, respaldada ni conectada oficialmente de ninguna manera con FromSoftware, Bandai Namco, ni con los creadores del mod *Seamless Co-op*. **Usa esta herramienta bajo tu propio riesgo.** Se recomienda hacer copias de seguridad manuales de tus archivos de guardado antes de usar gestores de terceros.
+This project is an open-source tool created by fans. It is not affiliated, associated, authorized, endorsed, or officially connected in any way with FromSoftware, Bandai Namco, or the creators of the *Seamless Co-op* mod. **Use this tool at your own risk.** It is recommended to manually back up your save files before using third-party managers.
