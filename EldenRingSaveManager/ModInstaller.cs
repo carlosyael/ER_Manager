@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -89,32 +90,115 @@ namespace EldenRingSaveManager
 
         private static void ExtraerZIPInteligentemente(string zipPath, string targetDir)
         {
+            // Before extracting, read old INI values if the file exists
+            Dictionary<string, string> oldIniValues = null;
+            string iniRelativePath = null;
+
+            // First pass: identify if there's an ersc_settings.ini in the zip and read old values
             using (ZipArchive archive = ZipFile.OpenRead(zipPath))
             {
                 foreach (ZipArchiveEntry entry in archive.Entries)
                 {
-                    if (string.IsNullOrEmpty(entry.Name)) // Es un directorio
+                    if (!string.IsNullOrEmpty(entry.Name) && 
+                        entry.FullName.EndsWith("ersc_settings.ini", StringComparison.OrdinalIgnoreCase))
+                    {
+                        iniRelativePath = entry.FullName;
+                        string existingIniPath = Path.Combine(targetDir, entry.FullName);
+                        
+                        if (File.Exists(existingIniPath))
+                        {
+                            oldIniValues = ParseIniValues(File.ReadAllLines(existingIniPath));
+                            Logger.Write($"[ModInstaller] Old INI read: {oldIniValues.Count} settings captured for migration.");
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // Second pass: extract everything (including the new INI)
+            using (ZipArchive archive = ZipFile.OpenRead(zipPath))
+            {
+                foreach (ZipArchiveEntry entry in archive.Entries)
+                {
+                    if (string.IsNullOrEmpty(entry.Name)) // Directory
                     {
                         Directory.CreateDirectory(Path.Combine(targetDir, entry.FullName));
                         continue;
                     }
 
                     string destinoFinal = Path.Combine(targetDir, entry.FullName);
-                    Directory.CreateDirectory(Path.GetDirectoryName(destinoFinal)); // Asegurar carpeta padre
-                    
-                    // Lógica para preservar la configuración Seamless (.ini/.config)
-                    if (destinoFinal.EndsWith("ersc_settings.ini", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (File.Exists(destinoFinal))
-                        {
-                            Logger.Write("[ModInstaller] Se encontró ersc_settings.ini existente. Se preservará tu configuración original.");
-                            continue; // Ignoramos la extracción de este archivo
-                        }
-                    }
-
+                    Directory.CreateDirectory(Path.GetDirectoryName(destinoFinal));
                     entry.ExtractToFile(destinoFinal, overwrite: true);
                 }
             }
+
+            // Third pass: migrate old INI values into the newly extracted INI
+            if (oldIniValues != null && oldIniValues.Count > 0 && !string.IsNullOrEmpty(iniRelativePath))
+            {
+                string newIniPath = Path.Combine(targetDir, iniRelativePath);
+                if (File.Exists(newIniPath))
+                {
+                    MigrateIniValues(newIniPath, oldIniValues);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Parses an INI file's lines into a dictionary of key=value pairs, ignoring comments and sections.
+        /// </summary>
+        private static Dictionary<string, string> ParseIniValues(string[] lines)
+        {
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var line in lines)
+            {
+                string trimmed = line.Trim();
+                if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith(";") || 
+                    trimmed.StartsWith("#") || trimmed.StartsWith("["))
+                    continue;
+
+                int idx = trimmed.IndexOf('=');
+                if (idx > 0)
+                {
+                    string key = trimmed.Substring(0, idx).Trim();
+                    string value = trimmed.Substring(idx + 1).Trim();
+                    result[key] = value;
+                }
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Takes the new INI file and replaces values of matching keys with the old values.
+        /// Preserves new keys, comments, structure, and formatting of the new version.
+        /// </summary>
+        private static void MigrateIniValues(string newIniPath, Dictionary<string, string> oldValues)
+        {
+            string[] newLines = File.ReadAllLines(newIniPath);
+            int migratedCount = 0;
+
+            for (int i = 0; i < newLines.Length; i++)
+            {
+                string trimmed = newLines[i].Trim();
+                if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith(";") || 
+                    trimmed.StartsWith("#") || trimmed.StartsWith("["))
+                    continue;
+
+                int idx = trimmed.IndexOf('=');
+                if (idx > 0)
+                {
+                    string key = trimmed.Substring(0, idx).Trim();
+                    
+                    // If the old config had this same key, migrate its value
+                    if (oldValues.TryGetValue(key, out string oldValue))
+                    {
+                        newLines[i] = $"{key} = {oldValue}";
+                        migratedCount++;
+                    }
+                }
+            }
+
+            File.WriteAllLines(newIniPath, newLines);
+            Logger.Write($"[ModInstaller] INI migration complete: {migratedCount} settings carried over, new settings preserved with defaults.");
         }
     }
 }

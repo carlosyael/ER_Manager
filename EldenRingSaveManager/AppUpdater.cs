@@ -197,36 +197,70 @@ rmdir /s /q ""{tempDir}""
 
         /// <summary>
         /// Compares two version strings (e.g. "5.1.0" vs "5.0.0").
+        /// Handles non-standard tags like "ER_ManagerV4" by extracting numeric parts.
         /// Returns true if latestVersion is newer than currentVersion.
         /// </summary>
         private static bool IsNewerVersion(string latestVersion, string currentVersion)
         {
             try
             {
-                // Clean up version strings
-                latestVersion = latestVersion.Trim().TrimStart('v', 'V');
-                currentVersion = currentVersion.Trim().TrimStart('v', 'V');
+                var latest = ExtractVersion(latestVersion);
+                var current = ExtractVersion(currentVersion);
 
-                var latest = ParseVersion(latestVersion);
-                var current = ParseVersion(currentVersion);
+                if (latest == null || current == null)
+                    return false;
 
                 return latest > current;
             }
             catch
             {
-                // If parsing fails, do a simple string comparison
-                return string.Compare(latestVersion, currentVersion, StringComparison.OrdinalIgnoreCase) > 0;
+                return false; // If we can't parse, assume no update available
             }
         }
 
-        private static Version ParseVersion(string versionString)
+        /// <summary>
+        /// Extracts a Version from a string that may contain non-numeric characters.
+        /// Handles: "5.0.0", "v5.0.0", "ER_ManagerV4", "V4.1", "release-2.3.1", etc.
+        /// </summary>
+        private static Version? ExtractVersion(string input)
         {
-            // Handle versions like "5.0", "5.0.0", "5.0.0.0"
-            string[] parts = versionString.Split('.');
-            int major = parts.Length > 0 ? int.Parse(parts[0]) : 0;
-            int minor = parts.Length > 1 ? int.Parse(parts[1]) : 0;
-            int build = parts.Length > 2 ? int.Parse(parts[2]) : 0;
-            int revision = parts.Length > 3 ? int.Parse(parts[3]) : 0;
+            if (string.IsNullOrWhiteSpace(input))
+                return null;
+
+            // Extract all digit groups separated by dots or other chars
+            var digits = new System.Collections.Generic.List<int>();
+            string currentNum = "";
+
+            foreach (char c in input)
+            {
+                if (char.IsDigit(c))
+                {
+                    currentNum += c;
+                }
+                else if (currentNum.Length > 0)
+                {
+                    digits.Add(int.Parse(currentNum));
+                    currentNum = "";
+                    // If we hit a dot after digits, continue collecting
+                    // If we hit a non-dot, we might have found the full version already
+                    if (c != '.' && digits.Count > 0)
+                    {
+                        // Only stop if we already have at least one digit group
+                        // and the separator is not a dot (e.g. "V4" → stop, "4.1" → continue)
+                    }
+                }
+            }
+            if (currentNum.Length > 0)
+                digits.Add(int.Parse(currentNum));
+
+            if (digits.Count == 0)
+                return null;
+
+            int major = digits.Count > 0 ? digits[0] : 0;
+            int minor = digits.Count > 1 ? digits[1] : 0;
+            int build = digits.Count > 2 ? digits[2] : 0;
+            int revision = digits.Count > 3 ? digits[3] : 0;
+
             return new Version(major, minor, build, revision);
         }
     }
