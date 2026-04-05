@@ -46,6 +46,21 @@ namespace EldenRingSaveManager
             this.btnRecargarIni = new System.Windows.Forms.Button();
             this.btnModoExperto = new System.Windows.Forms.Button();
             this.txtSeamlessIni = new System.Windows.Forms.TextBox();
+            // Settings tab controls
+            this.tabSettings = new System.Windows.Forms.TabPage();
+            this.grpLanguage = new System.Windows.Forms.GroupBox();
+            this.lblLanguage = new System.Windows.Forms.Label();
+            this.cmbLanguage = new System.Windows.Forms.ComboBox();
+            this.grpTheme = new System.Windows.Forms.GroupBox();
+            this.lblTheme = new System.Windows.Forms.Label();
+            this.cmbTheme = new System.Windows.Forms.ComboBox();
+            this.grpGameVersion = new System.Windows.Forms.GroupBox();
+            this.lblGameVersion = new System.Windows.Forms.Label();
+            this.cmbGameVersion = new System.Windows.Forms.ComboBox();
+            this.grpAbout = new System.Windows.Forms.GroupBox();
+            this.lblVersionInfo = new System.Windows.Forms.Label();
+            this.lblUpdateStatus = new System.Windows.Forms.Label();
+            this.btnCheckUpdates = new System.Windows.Forms.Button();
             
             this.tabControl1.SuspendLayout();
             this.tabGeneral.SuspendLayout();
@@ -54,6 +69,11 @@ namespace EldenRingSaveManager
             this.groupBox4.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.tabSeamlessConfig.SuspendLayout();
+            this.tabSettings.SuspendLayout();
+            this.grpLanguage.SuspendLayout();
+            this.grpTheme.SuspendLayout();
+            this.grpGameVersion.SuspendLayout();
+            this.grpAbout.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvConfig)).BeginInit();
             this.SuspendLayout();
             // 
@@ -61,6 +81,7 @@ namespace EldenRingSaveManager
             // 
             this.tabControl1.Controls.Add(this.tabGeneral);
             this.tabControl1.Controls.Add(this.tabSeamlessConfig);
+            this.tabControl1.Controls.Add(this.tabSettings);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
@@ -81,7 +102,7 @@ namespace EldenRingSaveManager
             this.tabGeneral.Padding = new System.Windows.Forms.Padding(3);
             this.tabGeneral.Size = new System.Drawing.Size(616, 473);
             this.tabGeneral.TabIndex = 0;
-            this.tabGeneral.Text = "Lanzador & Perfiles";
+            this.tabGeneral.Text = "Launcher & Profiles";
             this.tabGeneral.UseVisualStyleBackColor = true;
             // 
             // groupBox1
@@ -97,7 +118,7 @@ namespace EldenRingSaveManager
             this.groupBox1.Size = new System.Drawing.Size(600, 95);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Ruta de Partidas Guardadas y Perfiles";
+            this.groupBox1.Text = "Save Files Path & Profiles";
             // 
             // txtRutaPartidas
             // 
@@ -113,7 +134,7 @@ namespace EldenRingSaveManager
             this.btnSeleccionarPartidas.Name = "btnSeleccionarPartidas";
             this.btnSeleccionarPartidas.Size = new System.Drawing.Size(90, 26);
             this.btnSeleccionarPartidas.TabIndex = 1;
-            this.btnSeleccionarPartidas.Text = "Seleccionar...";
+            this.btnSeleccionarPartidas.Text = "Select...";
             this.btnSeleccionarPartidas.UseVisualStyleBackColor = true;
             this.btnSeleccionarPartidas.Click += new System.EventHandler(this.btnSeleccionarPartidas_Click);
             // 
@@ -123,7 +144,7 @@ namespace EldenRingSaveManager
             this.btnAutodetectar.Name = "btnAutodetectar";
             this.btnAutodetectar.Size = new System.Drawing.Size(90, 26);
             this.btnAutodetectar.TabIndex = 2;
-            this.btnAutodetectar.Text = "Autodetectar";
+            this.btnAutodetectar.Text = "Autodetect";
             this.btnAutodetectar.UseVisualStyleBackColor = true;
             this.btnAutodetectar.Click += new System.EventHandler(this.btnAutodetectar_Click);
             // 
@@ -134,7 +155,7 @@ namespace EldenRingSaveManager
             this.lblPerfil.Name = "lblPerfil";
             this.lblPerfil.Size = new System.Drawing.Size(81, 15);
             this.lblPerfil.TabIndex = 3;
-            this.lblPerfil.Text = "Perfil Activo:";
+            this.lblPerfil.Text = "Active Profile:";
             // 
             // cmbPerfiles
             // 
@@ -152,7 +173,7 @@ namespace EldenRingSaveManager
             this.btnNuevoPerfil.Name = "btnNuevoPerfil";
             this.btnNuevoPerfil.Size = new System.Drawing.Size(186, 26);
             this.btnNuevoPerfil.TabIndex = 5;
-            this.btnNuevoPerfil.Text = "+ Nuevo Perfil Co-op";
+            this.btnNuevoPerfil.Text = "+ New Co-op Profile";
             this.btnNuevoPerfil.UseVisualStyleBackColor = true;
             this.btnNuevoPerfil.Click += new System.EventHandler(this.btnNuevoPerfil_Click);
             // 
@@ -169,7 +190,7 @@ namespace EldenRingSaveManager
             this.groupBox2.Size = new System.Drawing.Size(600, 95);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Rutas de Ejecutables";
+            this.groupBox2.Text = "Executable Paths";
             // 
             // label1
             // 
@@ -194,7 +215,7 @@ namespace EldenRingSaveManager
             this.btnSeleccionarVanilla.Name = "btnSeleccionarVanilla";
             this.btnSeleccionarVanilla.Size = new System.Drawing.Size(90, 26);
             this.btnSeleccionarVanilla.TabIndex = 2;
-            this.btnSeleccionarVanilla.Text = "Seleccionar...";
+            this.btnSeleccionarVanilla.Text = "Select...";
             this.btnSeleccionarVanilla.UseVisualStyleBackColor = true;
             this.btnSeleccionarVanilla.Click += new System.EventHandler(this.btnSeleccionarVanilla_Click);
             // 
@@ -221,7 +242,7 @@ namespace EldenRingSaveManager
             this.btnSeleccionarSeamless.Name = "btnSeleccionarSeamless";
             this.btnSeleccionarSeamless.Size = new System.Drawing.Size(90, 26);
             this.btnSeleccionarSeamless.TabIndex = 5;
-            this.btnSeleccionarSeamless.Text = "Seleccionar...";
+            this.btnSeleccionarSeamless.Text = "Select...";
             this.btnSeleccionarSeamless.UseVisualStyleBackColor = true;
             this.btnSeleccionarSeamless.Click += new System.EventHandler(this.btnSeleccionarSeamless_Click);
             // 
@@ -234,7 +255,7 @@ namespace EldenRingSaveManager
             this.groupBox4.Size = new System.Drawing.Size(260, 95);
             this.groupBox4.TabIndex = 5;
             this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "Mantenimiento Extra";
+            this.groupBox4.Text = "Extra Maintenance";
             // 
             // btnActualizador
             // 
@@ -242,7 +263,7 @@ namespace EldenRingSaveManager
             this.btnActualizador.Name = "btnActualizador";
             this.btnActualizador.Size = new System.Drawing.Size(230, 26);
             this.btnActualizador.TabIndex = 0;
-            this.btnActualizador.Text = "Descargar/Act. Seamless Co-op";
+            this.btnActualizador.Text = "Download/Update Seamless Co-op";
             this.btnActualizador.UseVisualStyleBackColor = true;
             this.btnActualizador.Click += new System.EventHandler(this.btnActualizador_Click);
             // 
@@ -252,7 +273,7 @@ namespace EldenRingSaveManager
             this.btnLimpiarCache.Name = "btnLimpiarCache";
             this.btnLimpiarCache.Size = new System.Drawing.Size(230, 26);
             this.btnLimpiarCache.TabIndex = 1;
-            this.btnLimpiarCache.Text = "Limpiar Crash Dumps";
+            this.btnLimpiarCache.Text = "Clean Crash Dumps";
             this.btnLimpiarCache.UseVisualStyleBackColor = true;
             this.btnLimpiarCache.Click += new System.EventHandler(this.btnLimpiarCache_Click);
             // 
@@ -264,7 +285,7 @@ namespace EldenRingSaveManager
             this.lblEstado.Name = "lblEstado";
             this.lblEstado.Size = new System.Drawing.Size(217, 21);
             this.lblEstado.TabIndex = 2;
-            this.lblEstado.Text = "Estado actual: Desconocido";
+            this.lblEstado.Text = "Current status: Unknown";
             // 
             // btnCrearAccesos
             // 
@@ -273,7 +294,7 @@ namespace EldenRingSaveManager
             this.btnCrearAccesos.Name = "btnCrearAccesos";
             this.btnCrearAccesos.Size = new System.Drawing.Size(326, 38);
             this.btnCrearAccesos.TabIndex = 3;
-            this.btnCrearAccesos.Text = "Crear Accesos Directos";
+            this.btnCrearAccesos.Text = "Create Desktop Shortcuts";
             this.btnCrearAccesos.UseVisualStyleBackColor = true;
             this.btnCrearAccesos.Click += new System.EventHandler(this.btnCrearAccesos_Click);
             // 
@@ -285,7 +306,7 @@ namespace EldenRingSaveManager
             this.groupBox3.Size = new System.Drawing.Size(600, 140);
             this.groupBox3.TabIndex = 4;
             this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "Logs de Actividad";
+            this.groupBox3.Text = "Activity Logs";
             // 
             // txtLogs
             // 
@@ -310,7 +331,7 @@ namespace EldenRingSaveManager
             this.tabSeamlessConfig.Padding = new System.Windows.Forms.Padding(3);
             this.tabSeamlessConfig.Size = new System.Drawing.Size(616, 473);
             this.tabSeamlessConfig.TabIndex = 1;
-            this.tabSeamlessConfig.Text = "Configuración Seamless Co-op";
+            this.tabSeamlessConfig.Text = "Seamless Co-op Config";
             this.tabSeamlessConfig.UseVisualStyleBackColor = true;
             // 
             // dgvConfig
@@ -330,13 +351,13 @@ namespace EldenRingSaveManager
             // 
             // colProperty
             // 
-            this.colProperty.HeaderText = "Ajuste";
+            this.colProperty.HeaderText = "Setting";
             this.colProperty.Name = "colProperty";
             this.colProperty.ReadOnly = true;
             // 
             // colValue
             // 
-            this.colValue.HeaderText = "Valor";
+            this.colValue.HeaderText = "Value";
             this.colValue.Name = "colValue";
             // 
             // txtSeamlessIni
@@ -356,7 +377,7 @@ namespace EldenRingSaveManager
             this.btnRecargarIni.Name = "btnRecargarIni";
             this.btnRecargarIni.Size = new System.Drawing.Size(120, 30);
             this.btnRecargarIni.TabIndex = 2;
-            this.btnRecargarIni.Text = "Recargar Archivo";
+            this.btnRecargarIni.Text = "Reload File";
             this.btnRecargarIni.UseVisualStyleBackColor = true;
             this.btnRecargarIni.Click += new System.EventHandler(this.btnRecargarIni_Click);
             // 
@@ -366,7 +387,7 @@ namespace EldenRingSaveManager
             this.btnGuardarIni.Name = "btnGuardarIni";
             this.btnGuardarIni.Size = new System.Drawing.Size(130, 30);
             this.btnGuardarIni.TabIndex = 3;
-            this.btnGuardarIni.Text = "Guardar Cambios";
+            this.btnGuardarIni.Text = "Save Changes";
             this.btnGuardarIni.UseVisualStyleBackColor = true;
             this.btnGuardarIni.Click += new System.EventHandler(this.btnGuardarIni_Click);
             // 
@@ -376,9 +397,153 @@ namespace EldenRingSaveManager
             this.btnModoExperto.Name = "btnModoExperto";
             this.btnModoExperto.Size = new System.Drawing.Size(200, 30);
             this.btnModoExperto.TabIndex = 4;
-            this.btnModoExperto.Text = "Toggle Modo Experto (Texto)";
+            this.btnModoExperto.Text = "Toggle Expert Mode (Text)";
             this.btnModoExperto.UseVisualStyleBackColor = true;
             this.btnModoExperto.Click += new System.EventHandler(this.btnModoExperto_Click);
+            // 
+            // tabSettings
+            // 
+            this.tabSettings.Controls.Add(this.grpLanguage);
+            this.tabSettings.Controls.Add(this.grpTheme);
+            this.tabSettings.Controls.Add(this.grpGameVersion);
+            this.tabSettings.Controls.Add(this.grpAbout);
+            this.tabSettings.Location = new System.Drawing.Point(4, 24);
+            this.tabSettings.Name = "tabSettings";
+            this.tabSettings.Padding = new System.Windows.Forms.Padding(3);
+            this.tabSettings.Size = new System.Drawing.Size(616, 473);
+            this.tabSettings.TabIndex = 2;
+            this.tabSettings.Text = "Settings";
+            this.tabSettings.UseVisualStyleBackColor = true;
+            // 
+            // grpLanguage
+            // 
+            this.grpLanguage.Controls.Add(this.lblLanguage);
+            this.grpLanguage.Controls.Add(this.cmbLanguage);
+            this.grpLanguage.Location = new System.Drawing.Point(6, 6);
+            this.grpLanguage.Name = "grpLanguage";
+            this.grpLanguage.Size = new System.Drawing.Size(600, 65);
+            this.grpLanguage.TabIndex = 0;
+            this.grpLanguage.TabStop = false;
+            this.grpLanguage.Text = "Language";
+            // 
+            // lblLanguage
+            // 
+            this.lblLanguage.AutoSize = true;
+            this.lblLanguage.Location = new System.Drawing.Point(15, 28);
+            this.lblLanguage.Name = "lblLanguage";
+            this.lblLanguage.Size = new System.Drawing.Size(120, 15);
+            this.lblLanguage.TabIndex = 0;
+            this.lblLanguage.Text = "Interface Language:";
+            // 
+            // cmbLanguage
+            // 
+            this.cmbLanguage.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbLanguage.FormattingEnabled = true;
+            this.cmbLanguage.Location = new System.Drawing.Point(200, 25);
+            this.cmbLanguage.Name = "cmbLanguage";
+            this.cmbLanguage.Size = new System.Drawing.Size(200, 23);
+            this.cmbLanguage.TabIndex = 1;
+            this.cmbLanguage.SelectedIndexChanged += new System.EventHandler(this.cmbLanguage_SelectedIndexChanged);
+            // 
+            // grpTheme
+            // 
+            this.grpTheme.Controls.Add(this.lblTheme);
+            this.grpTheme.Controls.Add(this.cmbTheme);
+            this.grpTheme.Location = new System.Drawing.Point(6, 80);
+            this.grpTheme.Name = "grpTheme";
+            this.grpTheme.Size = new System.Drawing.Size(600, 65);
+            this.grpTheme.TabIndex = 1;
+            this.grpTheme.TabStop = false;
+            this.grpTheme.Text = "Theme";
+            // 
+            // lblTheme
+            // 
+            this.lblTheme.AutoSize = true;
+            this.lblTheme.Location = new System.Drawing.Point(15, 28);
+            this.lblTheme.Name = "lblTheme";
+            this.lblTheme.Size = new System.Drawing.Size(120, 15);
+            this.lblTheme.TabIndex = 0;
+            this.lblTheme.Text = "Application Theme:";
+            // 
+            // cmbTheme
+            // 
+            this.cmbTheme.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbTheme.FormattingEnabled = true;
+            this.cmbTheme.Location = new System.Drawing.Point(200, 25);
+            this.cmbTheme.Name = "cmbTheme";
+            this.cmbTheme.Size = new System.Drawing.Size(200, 23);
+            this.cmbTheme.TabIndex = 1;
+            this.cmbTheme.SelectedIndexChanged += new System.EventHandler(this.cmbTheme_SelectedIndexChanged);
+            // 
+            // grpGameVersion
+            // 
+            this.grpGameVersion.Controls.Add(this.lblGameVersion);
+            this.grpGameVersion.Controls.Add(this.cmbGameVersion);
+            this.grpGameVersion.Location = new System.Drawing.Point(6, 154);
+            this.grpGameVersion.Name = "grpGameVersion";
+            this.grpGameVersion.Size = new System.Drawing.Size(600, 65);
+            this.grpGameVersion.TabIndex = 2;
+            this.grpGameVersion.TabStop = false;
+            this.grpGameVersion.Text = "Game Version";
+            // 
+            // lblGameVersion
+            // 
+            this.lblGameVersion.AutoSize = true;
+            this.lblGameVersion.Location = new System.Drawing.Point(15, 28);
+            this.lblGameVersion.Name = "lblGameVersion";
+            this.lblGameVersion.Size = new System.Drawing.Size(80, 15);
+            this.lblGameVersion.TabIndex = 0;
+            this.lblGameVersion.Text = "Target Game:";
+            // 
+            // cmbGameVersion
+            // 
+            this.cmbGameVersion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbGameVersion.FormattingEnabled = true;
+            this.cmbGameVersion.Location = new System.Drawing.Point(200, 25);
+            this.cmbGameVersion.Name = "cmbGameVersion";
+            this.cmbGameVersion.Size = new System.Drawing.Size(300, 23);
+            this.cmbGameVersion.TabIndex = 1;
+            // 
+            // grpAbout
+            // 
+            this.grpAbout.Controls.Add(this.lblVersionInfo);
+            this.grpAbout.Controls.Add(this.lblUpdateStatus);
+            this.grpAbout.Controls.Add(this.btnCheckUpdates);
+            this.grpAbout.Location = new System.Drawing.Point(6, 228);
+            this.grpAbout.Name = "grpAbout";
+            this.grpAbout.Size = new System.Drawing.Size(600, 120);
+            this.grpAbout.TabIndex = 3;
+            this.grpAbout.TabStop = false;
+            this.grpAbout.Text = "About & Updates";
+            // 
+            // lblVersionInfo
+            // 
+            this.lblVersionInfo.AutoSize = true;
+            this.lblVersionInfo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.lblVersionInfo.Location = new System.Drawing.Point(15, 25);
+            this.lblVersionInfo.Name = "lblVersionInfo";
+            this.lblVersionInfo.Size = new System.Drawing.Size(150, 19);
+            this.lblVersionInfo.TabIndex = 0;
+            this.lblVersionInfo.Text = "Current Version: v5.0.0";
+            // 
+            // lblUpdateStatus
+            // 
+            this.lblUpdateStatus.AutoSize = true;
+            this.lblUpdateStatus.Location = new System.Drawing.Point(15, 55);
+            this.lblUpdateStatus.Name = "lblUpdateStatus";
+            this.lblUpdateStatus.Size = new System.Drawing.Size(200, 15);
+            this.lblUpdateStatus.TabIndex = 1;
+            this.lblUpdateStatus.Text = "";
+            // 
+            // btnCheckUpdates
+            // 
+            this.btnCheckUpdates.Location = new System.Drawing.Point(15, 80);
+            this.btnCheckUpdates.Name = "btnCheckUpdates";
+            this.btnCheckUpdates.Size = new System.Drawing.Size(200, 30);
+            this.btnCheckUpdates.TabIndex = 2;
+            this.btnCheckUpdates.Text = "Check for Updates";
+            this.btnCheckUpdates.UseVisualStyleBackColor = true;
+            this.btnCheckUpdates.Click += new System.EventHandler(this.btnCheckUpdates_Click);
             // 
             // FormPrincipal
             // 
@@ -390,7 +555,7 @@ namespace EldenRingSaveManager
             this.MaximizeBox = false;
             this.Name = "FormPrincipal";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Elden Ring: Seamless Co-op Save Manager v4.0";
+            this.Text = "Elden Ring: Seamless Co-op Save Manager v5.0";
             this.Load += new System.EventHandler(this.FormPrincipal_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabGeneral.ResumeLayout(false);
@@ -404,6 +569,15 @@ namespace EldenRingSaveManager
             this.groupBox3.PerformLayout();
             this.tabSeamlessConfig.ResumeLayout(false);
             this.tabSeamlessConfig.PerformLayout();
+            this.tabSettings.ResumeLayout(false);
+            this.grpLanguage.ResumeLayout(false);
+            this.grpLanguage.PerformLayout();
+            this.grpTheme.ResumeLayout(false);
+            this.grpTheme.PerformLayout();
+            this.grpGameVersion.ResumeLayout(false);
+            this.grpGameVersion.PerformLayout();
+            this.grpAbout.ResumeLayout(false);
+            this.grpAbout.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvConfig)).EndInit();
             this.ResumeLayout(false);
         }
@@ -441,5 +615,21 @@ namespace EldenRingSaveManager
         private System.Windows.Forms.Button btnGuardarIni;
         private System.Windows.Forms.Button btnRecargarIni;
         private System.Windows.Forms.Button btnModoExperto;
+
+        // Settings tab
+        private System.Windows.Forms.TabPage tabSettings;
+        private System.Windows.Forms.GroupBox grpLanguage;
+        private System.Windows.Forms.Label lblLanguage;
+        private System.Windows.Forms.ComboBox cmbLanguage;
+        private System.Windows.Forms.GroupBox grpTheme;
+        private System.Windows.Forms.Label lblTheme;
+        private System.Windows.Forms.ComboBox cmbTheme;
+        private System.Windows.Forms.GroupBox grpGameVersion;
+        private System.Windows.Forms.Label lblGameVersion;
+        private System.Windows.Forms.ComboBox cmbGameVersion;
+        private System.Windows.Forms.GroupBox grpAbout;
+        private System.Windows.Forms.Label lblVersionInfo;
+        private System.Windows.Forms.Label lblUpdateStatus;
+        private System.Windows.Forms.Button btnCheckUpdates;
     }
 }

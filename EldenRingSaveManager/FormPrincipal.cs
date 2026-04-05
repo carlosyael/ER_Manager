@@ -11,16 +11,21 @@ namespace EldenRingSaveManager
     public partial class FormPrincipal : Form
     {
         private bool isUpdatingProfiles = false;
+        private bool isUpdatingLanguage = false;
+        private bool isUpdatingTheme = false;
+        private AppUpdater.UpdateInfo _latestUpdateInfo = null;
+
         private string CurrentIniPath => !string.IsNullOrEmpty(txtRutaVanilla.Text) 
             ? Path.Combine(Path.GetDirectoryName(txtRutaVanilla.Text), "SeamlessCoop", "ersc_settings.ini")
             : string.Empty;
 
         public FormPrincipal()
         {
+            LocalizationManager.Initialize();
             InitializeComponent();
         }
 
-        private void FormPrincipal_Load(object sender, EventArgs e)
+        private async void FormPrincipal_Load(object sender, EventArgs e)
         {
             txtRutaPartidas.Text = ConfigHelper.GetSetting("RutaPartidas") ?? string.Empty;
             txtRutaVanilla.Text = ConfigHelper.GetSetting("RutaVanilla") ?? string.Empty;
@@ -28,11 +33,228 @@ namespace EldenRingSaveManager
 
             CargarPerfiles();
             ActualizarEstado();
+            ThemeManager.Initialize();
+            InitializeSettingsTab();
+            ApplyLocalization();
+            ThemeManager.ApplyTheme(this);
             
-            Logger.Write("[GUI] UI Iniciada correctamente. v4.0");
-            Log("Aplicación iniciada. Bienvenido a Elden Ring Save Manager v4.0.");
+            Logger.Write(LocalizationManager.Get("MsgUiStarted", AppUpdater.AppVersion));
+            Log(LocalizationManager.Get("MsgAppStarted", AppUpdater.AppVersion));
 
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
+
+            // Check for updates on startup (silent, non-blocking)
+            await CheckForUpdateSilentAsync();
+        }
+
+        // --- Localization ---
+        private void ApplyLocalization()
+        {
+            // Window title
+            this.Text = LocalizationManager.Get("WindowTitle", AppUpdater.AppVersion);
+
+            // Tab names
+            tabGeneral.Text = LocalizationManager.Get("TabGeneral");
+            tabSeamlessConfig.Text = LocalizationManager.Get("TabSeamlessConfig");
+            tabSettings.Text = LocalizationManager.Get("TabSettings");
+
+            // GroupBox titles
+            groupBox1.Text = LocalizationManager.Get("GroupSavePaths");
+            groupBox2.Text = LocalizationManager.Get("GroupExecutables");
+            groupBox4.Text = LocalizationManager.Get("GroupMaintenance");
+            groupBox3.Text = LocalizationManager.Get("GroupLogs");
+            grpLanguage.Text = LocalizationManager.Get("GroupLanguage");
+            grpTheme.Text = LocalizationManager.Get("GroupTheme");
+            grpGameVersion.Text = LocalizationManager.Get("GroupGameVersion");
+            grpAbout.Text = LocalizationManager.Get("GroupAbout");
+
+            // Labels
+            lblPerfil.Text = LocalizationManager.Get("LabelActiveProfile");
+            label1.Text = LocalizationManager.Get("LabelVanilla");
+            label2.Text = LocalizationManager.Get("LabelSeamlessCoop");
+            lblLanguage.Text = LocalizationManager.Get("LabelLanguage");
+            lblTheme.Text = LocalizationManager.Get("LabelTheme");
+            lblGameVersion.Text = LocalizationManager.Get("LabelGameVersion");
+            lblVersionInfo.Text = LocalizationManager.Get("LabelVersion", AppUpdater.AppVersion);
+
+            // Buttons
+            btnSeleccionarPartidas.Text = LocalizationManager.Get("BtnSelect");
+            btnAutodetectar.Text = LocalizationManager.Get("BtnAutodetect");
+            btnNuevoPerfil.Text = LocalizationManager.Get("BtnNewProfile");
+            btnSeleccionarVanilla.Text = LocalizationManager.Get("BtnSelect");
+            btnSeleccionarSeamless.Text = LocalizationManager.Get("BtnSelect");
+            btnActualizador.Text = LocalizationManager.Get("BtnDownloadMod");
+            btnLimpiarCache.Text = LocalizationManager.Get("BtnCleanCrashDumps");
+            btnCrearAccesos.Text = LocalizationManager.Get("BtnCreateShortcuts");
+            btnRecargarIni.Text = LocalizationManager.Get("BtnReloadFile");
+            btnGuardarIni.Text = LocalizationManager.Get("BtnSaveChanges");
+            btnModoExperto.Text = txtSeamlessIni.Visible 
+                ? LocalizationManager.Get("BtnToggleVisual") 
+                : LocalizationManager.Get("BtnToggleExpert");
+            btnCheckUpdates.Text = LocalizationManager.Get("BtnCheckUpdates");
+
+            // DataGridView columns
+            colProperty.HeaderText = LocalizationManager.Get("ColSetting");
+            colValue.HeaderText = LocalizationManager.Get("ColValue");
+
+            // Update status label based on current estado
+            ActualizarEstado();
+
+            // Update theme/game dropdowns text (they're localized)
+            RefreshThemeDropdown();
+            RefreshGameVersionDropdown();
+
+            // Update the update status label if we have info
+            if (_latestUpdateInfo != null)
+            {
+                if (_latestUpdateInfo.UpdateAvailable)
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpdateAvailable", _latestUpdateInfo.LatestVersion);
+                else
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpToDate");
+            }
+        }
+
+        private void InitializeSettingsTab()
+        {
+            // Language dropdown
+            isUpdatingLanguage = true;
+            cmbLanguage.Items.Clear();
+            foreach (var lang in LocalizationManager.GetAvailableLanguages())
+                cmbLanguage.Items.Add(LocalizationManager.GetLanguageDisplayName(lang));
+            
+            string currentLang = LocalizationManager.CurrentLanguage;
+            string displayName = LocalizationManager.GetLanguageDisplayName(currentLang);
+            if (cmbLanguage.Items.Contains(displayName))
+                cmbLanguage.SelectedItem = displayName;
+            else
+                cmbLanguage.SelectedIndex = 0;
+            isUpdatingLanguage = false;
+
+            // Theme dropdown
+            RefreshThemeDropdown();
+
+            // Game version dropdown
+            RefreshGameVersionDropdown();
+
+            // Version info
+            lblVersionInfo.Text = LocalizationManager.Get("LabelVersion", AppUpdater.AppVersion);
+        }
+
+        private void RefreshThemeDropdown()
+        {
+            isUpdatingTheme = true;
+            cmbTheme.Items.Clear();
+            cmbTheme.Items.Add(LocalizationManager.Get("ThemeLight"));
+            cmbTheme.Items.Add(LocalizationManager.Get("ThemeDark"));
+            cmbTheme.SelectedIndex = ThemeManager.IsDarkMode ? 1 : 0;
+            isUpdatingTheme = false;
+        }
+
+        private void cmbTheme_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (isUpdatingTheme) return;
+
+            string theme = cmbTheme.SelectedIndex == 1 ? "Dark" : "Light";
+            ThemeManager.SetTheme(theme);
+            ThemeManager.ApplyTheme(this);
+            Log(theme == "Dark" ? "🌙 Dark theme applied." : "☀️ Light theme applied.");
+        }
+
+        private void RefreshGameVersionDropdown()
+        {
+            cmbGameVersion.Items.Clear();
+            cmbGameVersion.Items.Add(LocalizationManager.Get("GameEldenRing"));
+            cmbGameVersion.Items.Add(LocalizationManager.Get("GameDS1"));
+            cmbGameVersion.Items.Add(LocalizationManager.Get("GameDS3"));
+            cmbGameVersion.SelectedIndex = 0;
+        }
+
+        private void cmbLanguage_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (isUpdatingLanguage) return;
+
+            string[] langs = LocalizationManager.GetAvailableLanguages();
+            if (cmbLanguage.SelectedIndex >= 0 && cmbLanguage.SelectedIndex < langs.Length)
+            {
+                string selectedLang = langs[cmbLanguage.SelectedIndex];
+                if (selectedLang != LocalizationManager.CurrentLanguage)
+                {
+                    LocalizationManager.SetLanguage(selectedLang);
+                    ApplyLocalization();
+                    Log(LocalizationManager.Get("MsgAppStarted", AppUpdater.AppVersion));
+                }
+            }
+        }
+
+        // --- Update Check ---
+        private async Task CheckForUpdateSilentAsync()
+        {
+            try
+            {
+                lblUpdateStatus.Text = LocalizationManager.Get("LabelCheckingUpdate");
+                _latestUpdateInfo = await AppUpdater.CheckForUpdateAsync();
+
+                if (_latestUpdateInfo.UpdateAvailable)
+                {
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpdateAvailable", _latestUpdateInfo.LatestVersion);
+                    lblUpdateStatus.ForeColor = System.Drawing.Color.DarkOrange;
+                    Log($"🆕 {LocalizationManager.Get("LabelUpdateAvailable", _latestUpdateInfo.LatestVersion)}");
+                }
+                else
+                {
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpToDate");
+                    lblUpdateStatus.ForeColor = System.Drawing.Color.Green;
+                }
+            }
+            catch (Exception ex)
+            {
+                lblUpdateStatus.Text = "";
+                Logger.Write($"[AppUpdater] Silent check failed: {ex.Message}");
+            }
+        }
+
+        private async void btnCheckUpdates_Click(object sender, EventArgs e)
+        {
+            btnCheckUpdates.Enabled = false;
+            lblUpdateStatus.Text = LocalizationManager.Get("LabelCheckingUpdate");
+
+            try
+            {
+                _latestUpdateInfo = await AppUpdater.CheckForUpdateAsync();
+
+                if (_latestUpdateInfo.UpdateAvailable)
+                {
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpdateAvailable", _latestUpdateInfo.LatestVersion);
+                    lblUpdateStatus.ForeColor = System.Drawing.Color.DarkOrange;
+
+                    DialogResult result = MessageBox.Show(
+                        LocalizationManager.Get("UpdateAvailableMsg", _latestUpdateInfo.LatestVersion, _latestUpdateInfo.ReleaseNotes),
+                        LocalizationManager.Get("UpdateAvailable"),
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Information);
+
+                    if (result == DialogResult.Yes && !string.IsNullOrEmpty(_latestUpdateInfo.DownloadUrl))
+                    {
+                        Log(LocalizationManager.Get("UpdateDownloading"));
+                        await AppUpdater.PerformUpdateAsync(_latestUpdateInfo.DownloadUrl, _latestUpdateInfo.AssetName);
+                    }
+                }
+                else
+                {
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpToDate");
+                    lblUpdateStatus.ForeColor = System.Drawing.Color.Green;
+                    MessageBox.Show(LocalizationManager.Get("LabelUpToDate"), "Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(LocalizationManager.Get("UpdateError", ex.Message));
+                MessageBox.Show(
+                    LocalizationManager.Get("UpdateError", ex.Message),
+                    LocalizationManager.Get("UpdateErrorTitle"),
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally { btnCheckUpdates.Enabled = true; }
         }
 
         // --- Gestión de Configuración Base ---
@@ -48,7 +270,7 @@ namespace EldenRingSaveManager
                     txtRutaPartidas.Text = fbd.SelectedPath;
                     GuardarConfiguracion("RutaPartidas", txtRutaPartidas.Text);
                     ActualizarEstado();
-                    Log($"Ruta de partidas actualizada a: {txtRutaPartidas.Text}");
+                    Log(LocalizationManager.Get("MsgPathUpdated", txtRutaPartidas.Text));
                 }
             }
         }
@@ -61,13 +283,13 @@ namespace EldenRingSaveManager
                 txtRutaPartidas.Text = rutaDeteccion;
                 GuardarConfiguracion("RutaPartidas", txtRutaPartidas.Text);
                 ActualizarEstado();
-                Log($"Ruta autodectada y guardada.");
+                Log(LocalizationManager.Get("MsgPathAutodetected"));
             }
         }
 
         private void btnSeleccionarVanilla_Click(object sender, EventArgs e)
         {
-            using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Ejecutable|*.exe" })
+            using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Executable|*.exe" })
             {
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
@@ -80,7 +302,7 @@ namespace EldenRingSaveManager
 
         private void btnSeleccionarSeamless_Click(object sender, EventArgs e)
         {
-            using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Lanzador|*.exe;*.lnk" })
+            using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Launcher|*.exe;*.lnk" })
             {
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
@@ -100,7 +322,10 @@ namespace EldenRingSaveManager
         {
             if (string.IsNullOrEmpty(txtRutaPartidas.Text) || string.IsNullOrEmpty(txtRutaVanilla.Text) || string.IsNullOrEmpty(txtRutaSeamless.Text))
             {
-                if (interactivo) MessageBox.Show("Faltan rutas por configurar antes de crear los accesos.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (interactivo) MessageBox.Show(
+                    LocalizationManager.Get("MsgMissingPaths"),
+                    LocalizationManager.Get("MsgAttention"),
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -110,12 +335,14 @@ namespace EldenRingSaveManager
                 
                 if (interactivo)
                 {
-                    DialogResult customIcon = MessageBox.Show("¿Deseas elegir un icono personalizado para Seamless Co-op? (Si marcas No, usará el del juego)", 
-                                                             "Icono Personalizado", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                    DialogResult customIcon = MessageBox.Show(
+                        LocalizationManager.Get("MsgCustomIcon"), 
+                        LocalizationManager.Get("MsgCustomIconTitle"),
+                        MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
                     if (customIcon == DialogResult.Cancel) return;
                     if (customIcon == DialogResult.Yes)
                     {
-                        using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Icono (*.ico)|*.ico" })
+                        using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Icon (*.ico)|*.ico" })
                         {
                             if (ofd.ShowDialog() == DialogResult.OK) iconCoop = ofd.FileName;
                         }
@@ -125,12 +352,15 @@ namespace EldenRingSaveManager
                 ShortcutCreator.CrearAccesoDirecto("ER - Vanilla", "-launch_vanilla", txtRutaVanilla.Text, txtRutaVanilla.Text);
                 ShortcutCreator.CrearAccesoDirecto("ER - Seamless Co-op", "-launch_seamless", txtRutaSeamless.Text, iconCoop);
 
-                if (interactivo) MessageBox.Show("Accesos directos creados.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                Log("Accesos directos creados con éxito.");
+                if (interactivo) MessageBox.Show(
+                    LocalizationManager.Get("MsgShortcutsCreatedSuccess"),
+                    LocalizationManager.Get("MsgSuccess"),
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Log(LocalizationManager.Get("MsgShortcutsCreated"));
             }
             catch (Exception ex)
             {
-                Log($"Error al crear accesos: {ex.Message}");
+                Log(LocalizationManager.Get("MsgErrorCreatingShortcuts", ex.Message));
             }
         }
 
@@ -139,11 +369,11 @@ namespace EldenRingSaveManager
         {
             isUpdatingProfiles = true;
             cmbPerfiles.Items.Clear();
-            string perfilesStr = ConfigHelper.GetSetting("Perfiles") ?? "Predeterminado";
+            string perfilesStr = ConfigHelper.GetSetting("Perfiles") ?? "Default";
             string[] perfiles = perfilesStr.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var p in perfiles) cmbPerfiles.Items.Add(p);
             
-            string actual = ConfigHelper.GetSetting("PerfilActual") ?? "Predeterminado";
+            string actual = ConfigHelper.GetSetting("PerfilActual") ?? "Default";
             if (cmbPerfiles.Items.Contains(actual)) cmbPerfiles.SelectedItem = actual;
             else if (cmbPerfiles.Items.Count > 0) cmbPerfiles.SelectedIndex = 0;
                 
@@ -162,15 +392,17 @@ namespace EldenRingSaveManager
                 {
                     SaveFileManager.AplicarPerfil(txtRutaPartidas.Text, perfilAnterior, perfilNuevo);
                     GuardarConfiguracion("PerfilActual", perfilNuevo);
-                    Log($"Perfil cambiado de {perfilAnterior} a {perfilNuevo}. Archivos rotados.");
+                    Log(LocalizationManager.Get("MsgProfileChanged", perfilAnterior, perfilNuevo));
                 }
-                catch (Exception ex) { MessageBox.Show($"Error al rotar perfiles: {ex.Message}"); }
+                catch (Exception ex) { MessageBox.Show(LocalizationManager.Get("MsgErrorRotatingProfiles", ex.Message)); }
             }
         }
 
         private void btnNuevoPerfil_Click(object sender, EventArgs e)
         {
-            string input = MostrarInputBox("Nombre del nuevo perfil (ej: Coop Con Maria):", "Nuevo Perfil");
+            string input = MostrarInputBox(
+                LocalizationManager.Get("MsgNewProfilePrompt"),
+                LocalizationManager.Get("MsgNewProfileTitle"));
             if (!string.IsNullOrWhiteSpace(input) && !cmbPerfiles.Items.Contains(input))
             {
                 string perfilesStr = ConfigHelper.GetSetting("Perfiles");
@@ -178,7 +410,7 @@ namespace EldenRingSaveManager
                 GuardarConfiguracion("Perfiles", perfiles);
                 CargarPerfiles();
                 cmbPerfiles.SelectedItem = input;
-                Log($"Nuevo perfil '{input}' creado y seleccionado.");
+                Log(LocalizationManager.Get("MsgNewProfileCreated", input));
             }
         }
 
@@ -187,7 +419,7 @@ namespace EldenRingSaveManager
             Form prompt = new Form() { Width = 400, Height = 150, FormBorderStyle = FormBorderStyle.FixedDialog, Text = caption, StartPosition = FormStartPosition.CenterScreen };
             Label txt = new Label() { Left = 20, Top = 20, Width = 340, Text = texto };
             TextBox box = new TextBox() { Left = 20, Top = 50, Width = 340 };
-            Button confirm = new Button() { Text = "Aceptar", Left = 260, Top = 80, Width = 100, DialogResult = DialogResult.OK };
+            Button confirm = new Button() { Text = LocalizationManager.Get("BtnOk"), Left = 260, Top = 80, Width = 100, DialogResult = DialogResult.OK };
             prompt.Controls.Add(txt); prompt.Controls.Add(box); prompt.Controls.Add(confirm);
             prompt.AcceptButton = confirm;
             return prompt.ShowDialog() == DialogResult.OK ? box.Text : "";
@@ -198,15 +430,20 @@ namespace EldenRingSaveManager
         {
             if (string.IsNullOrEmpty(txtRutaVanilla.Text))
             {
-                MessageBox.Show("Por favor, selecciona primero tu eldenring.exe (Vanilla) para saber dónde instalar el mod.", "Ruta Necesaria", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(
+                    LocalizationManager.Get("MsgSelectVanillaFirst"),
+                    LocalizationManager.Get("MsgPathRequired"),
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            DialogResult res = MessageBox.Show($"¿Deseas descargar de GitHub e instalar/actualizar Seamless Co-op automáticamente en {Path.GetDirectoryName(txtRutaVanilla.Text)}?",
-                                               "Instalar Mod", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            DialogResult res = MessageBox.Show(
+                LocalizationManager.Get("MsgInstallModConfirm", Path.GetDirectoryName(txtRutaVanilla.Text)),
+                LocalizationManager.Get("MsgInstallMod"),
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (res != DialogResult.Yes) return;
 
-            Log("Iniciando instalación automática de Seamless Co-op...");
+            Log(LocalizationManager.Get("MsgInstallingMod"));
             btnActualizador.Enabled = false;
 
             try
@@ -215,15 +452,21 @@ namespace EldenRingSaveManager
                 txtRutaSeamless.Text = launcherPath;
                 GuardarConfiguracion("RutaSeamless", launcherPath);
                 
-                Log("Creando accesos directos actualizados automáticamente...");
+                Log(LocalizationManager.Get("MsgCreatingShortcutsAuto"));
                 CrearAccesosMetodo(interactivo: false);
 
-                MessageBox.Show("¡Instalación completada con éxito! Archivos descomprimidos y acceso directo actualizado.", "Completado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(
+                    LocalizationManager.Get("MsgInstallComplete"),
+                    LocalizationManager.Get("MsgCompleted"),
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                Log($"Error al instalar: {ex.Message}");
-                MessageBox.Show($"Fallo conectando a GitHub o extrayendo: {ex.Message}", "Error de Instalación", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log(LocalizationManager.Get("MsgInstallError", ex.Message));
+                MessageBox.Show(
+                    LocalizationManager.Get("MsgInstallErrorGithub", ex.Message),
+                    LocalizationManager.Get("MsgInstallErrorTitle"),
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally { btnActualizador.Enabled = true; }
         }
@@ -231,10 +474,13 @@ namespace EldenRingSaveManager
         private void btnLimpiarCache_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(txtRutaVanilla.Text)) return;
-            if (MessageBox.Show("¿Limpiar archivos temporales de crash (.mdmp)?", "Limpieza", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            if (MessageBox.Show(
+                LocalizationManager.Get("MsgCleanCrashConfirm"),
+                LocalizationManager.Get("MsgCleanTitle"),
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
                 SaveFileManager.LimpiarTemporales(txtRutaVanilla.Text);
-                Log("Limpieza de crash dumps ejecutada.");
+                Log(LocalizationManager.Get("MsgCleanDone"));
             }
         }
 
@@ -247,14 +493,16 @@ namespace EldenRingSaveManager
         private void btnRecargarIni_Click(object sender, EventArgs e)
         {
             CargarConfiguracionIni();
-            Log("Mapeo de INI recargado.");
+            Log(LocalizationManager.Get("MsgIniReloaded"));
         }
 
         private void btnModoExperto_Click(object sender, EventArgs e)
         {
             txtSeamlessIni.Visible = !txtSeamlessIni.Visible;
             dgvConfig.Visible = !txtSeamlessIni.Visible;
-            btnModoExperto.Text = txtSeamlessIni.Visible ? "Toggle Formulario (Visual)" : "Toggle Modo Experto (Texto)";
+            btnModoExperto.Text = txtSeamlessIni.Visible 
+                ? LocalizationManager.Get("BtnToggleVisual") 
+                : LocalizationManager.Get("BtnToggleExpert");
         }
 
         private void CargarConfiguracionIni()
@@ -265,19 +513,19 @@ namespace EldenRingSaveManager
 
             if (string.IsNullOrEmpty(iniPath))
             {
-                txtSeamlessIni.Text = "Ruta Base Vanilla no fijada.";
+                txtSeamlessIni.Text = LocalizationManager.Get("MsgVanillaPathNotSet");
                 return;
             }
 
             if (!File.Exists(iniPath))
             {
-                txtSeamlessIni.Text = "No se encontró el archivo ersc_settings.ini.";
+                txtSeamlessIni.Text = LocalizationManager.Get("MsgIniNotFound");
                 return;
             }
 
-            // Mapeo Inteligente
+            // Smart Mapping
             string[] lineas = File.ReadAllLines(iniPath);
-            txtSeamlessIni.Text = string.Join(Environment.NewLine, lineas); // Respaldo para la caja de texto avanzado
+            txtSeamlessIni.Text = string.Join(Environment.NewLine, lineas);
 
             foreach (var l in lineas)
             {
@@ -304,12 +552,10 @@ namespace EldenRingSaveManager
             {
                 if (txtSeamlessIni.Visible)
                 {
-                    // Estamos en modo experto, guardar todo crudo.
                     File.WriteAllText(iniPath, txtSeamlessIni.Text);
                 }
                 else
                 {
-                    // Guardado inteligente: Extraer el datagridview y reemplazar solo los valores que coincidan sin romper lineas.
                     var gridValores = new Dictionary<string, string>();
                     foreach (DataGridViewRow row in dgvConfig.Rows)
                     {
@@ -330,8 +576,6 @@ namespace EldenRingSaveManager
                             string keyOriginal = l.Substring(0, idx).Trim();
                             if (gridValores.ContainsKey(keyOriginal))
                             {
-                                // Respetamos los espacios usando la llave original pero incrustando el nuevo valor del DataGridView
-                                // Intentaremos reconstruir de manera simple
                                 lineasOriginales[i] = $"{keyOriginal} = {gridValores[keyOriginal]}";
                             }
                         }
@@ -339,16 +583,21 @@ namespace EldenRingSaveManager
                     File.WriteAllLines(iniPath, lineasOriginales);
                 }
                 
-                MessageBox.Show("Variables de Seamless modificadas con éxito.", "Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                Log("Archivo INI estructurado fue guardado cuidando sus comentarios originales.");
+                MessageBox.Show(
+                    LocalizationManager.Get("MsgIniSaved"),
+                    LocalizationManager.Get("MsgSaved"),
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Log(LocalizationManager.Get("MsgIniSavedLog"));
                 
-                // Recargar para sincronizar vista experta y tabla
                 CargarConfiguracionIni();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al guardar el INI: {ex.Message}", "Fallo de I/O", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Log($"Fallo modificando INI: {ex.Message}");
+                MessageBox.Show(
+                    LocalizationManager.Get("MsgIniSaveError", ex.Message),
+                    LocalizationManager.Get("MsgIniSaveErrorTitle"),
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log(LocalizationManager.Get("MsgIniSaveError", ex.Message));
             }
         }
 
@@ -359,10 +608,22 @@ namespace EldenRingSaveManager
             
             switch (estado)
             {
-                case EstadoPartida.Vanilla: lblEstado.Text = "Estado actual: Vanilla (.sl2)"; lblEstado.ForeColor = System.Drawing.Color.DodgerBlue; break;
-                case EstadoPartida.Seamless: lblEstado.Text = "Estado actual: Seamless (.co2)"; lblEstado.ForeColor = System.Drawing.Color.Goldenrod; break;
-                case EstadoPartida.Mixto: lblEstado.Text = "Estado: Mixto (Riesgo pérdida)"; lblEstado.ForeColor = System.Drawing.Color.Crimson; break;
-                case EstadoPartida.Desconocido: lblEstado.Text = "Estado actual: Desconocido"; lblEstado.ForeColor = System.Drawing.Color.Gray; break;
+                case EstadoPartida.Vanilla:
+                    lblEstado.Text = LocalizationManager.Get("StatusVanilla");
+                    lblEstado.ForeColor = System.Drawing.Color.DodgerBlue;
+                    break;
+                case EstadoPartida.Seamless:
+                    lblEstado.Text = LocalizationManager.Get("StatusSeamless");
+                    lblEstado.ForeColor = System.Drawing.Color.Goldenrod;
+                    break;
+                case EstadoPartida.Mixto:
+                    lblEstado.Text = LocalizationManager.Get("StatusMixed");
+                    lblEstado.ForeColor = System.Drawing.Color.Crimson;
+                    break;
+                case EstadoPartida.Desconocido:
+                    lblEstado.Text = LocalizationManager.Get("StatusUnknown");
+                    lblEstado.ForeColor = System.Drawing.Color.Gray;
+                    break;
             }
         }
 

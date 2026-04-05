@@ -23,7 +23,10 @@ namespace EldenRingSaveManager
 
                 ApplicationConfiguration.Initialize();
 
-                // Modo Silencioso / CLI (Cuando se invoca desde el acceso directo)
+                // Initialize localization early for CLI messages
+                LocalizationManager.Initialize();
+
+                // Silent / CLI Mode (When invoked from desktop shortcuts)
                 if (args.Length > 0)
                 {
                     string argumento = args[0].ToLowerInvariant();
@@ -32,13 +35,15 @@ namespace EldenRingSaveManager
                     string rutaVanilla = ConfigHelper.GetSetting("RutaVanilla");
                     string rutaSeamless = ConfigHelper.GetSetting("RutaSeamless");
 
-                    Logger.Write($"[CLI] Iniciando con argumento {argumento}");
+                    Logger.Write(LocalizationManager.Get("CliStarting", argumento));
 
                     if (string.IsNullOrEmpty(rutaPartidas))
                     {
-                        Logger.Write("[CLI] Error: Ruta de partidas no configurada.");
-                        MessageBox.Show("La ruta de partidas guardadas no está configurada. Por favor abre la aplicación normalmente y configúrala.", 
-                                        "Error de Configuración", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Logger.Write("[CLI] Error: Save path not configured.");
+                        MessageBox.Show(
+                            LocalizationManager.Get("CliSavePathNotConfigured"), 
+                            LocalizationManager.Get("CliConfigError"),
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
                         Environment.Exit(1);
                     }
 
@@ -57,44 +62,48 @@ namespace EldenRingSaveManager
                     }
                     else
                     {
-                        Logger.Write($"[CLI] Argumento desconocido: {argumento}");
+                        Logger.Write(LocalizationManager.Get("CliUnknownArg", argumento));
                         Environment.Exit(1);
                     }
 
                     try
                     {
-                        // Feature 3: Detector de Steam Abierto
+                        // Steam detection
                         Process[] steamProcs = Process.GetProcessesByName("steam");
                         if (steamProcs.Length == 0)
                         {
-                            Logger.Write("[CLI] Steam no está activo. Intentando lanzarlo...");
+                            Logger.Write(LocalizationManager.Get("CliSteamNotActive"));
                             string steamPath = (string)Registry.GetValue(@"HKEY_CURRENT_USER\Software\Valve\Steam", "SteamExe", null);
                             if (!string.IsNullOrEmpty(steamPath) && File.Exists(steamPath))
                             {
                                 Process.Start(steamPath);
-                                Logger.Write("[CLI] Steam iniciado mediante registro.");
-                                System.Threading.Thread.Sleep(3000); // Darle tiempo a Steam para reaccionar
+                                Logger.Write(LocalizationManager.Get("CliSteamLaunched"));
+                                System.Threading.Thread.Sleep(3000);
                             }
                             else
                             {
-                                Logger.Write("[CLI] No se encontró Steam. Abortando lanzamiento.");
-                                MessageBox.Show("Elden Ring requiere Steam activo para funcionar y no se pudo autoiniciar. Por favor abre Steam e inténtalo de nuevo.", 
-                                                "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                Logger.Write(LocalizationManager.Get("CliSteamNotFound"));
+                                MessageBox.Show(
+                                    LocalizationManager.Get("CliSteamRequired"), 
+                                    LocalizationManager.Get("CliWarning"),
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 Environment.Exit(1);
                             }
                         }
 
-                        // Validar que el juego no esté ejecutándose
+                        // Validate game is not already running
                         Process[] procesos = Process.GetProcessesByName("eldenring");
                         if (procesos.Length > 0)
                         {
-                            Logger.Write("[CLI] Bloqueo: Elden Ring ya está en ejecución.");
-                            MessageBox.Show("Elden Ring está actualmente en ejecución. Cierra el juego completamente antes de cambiar entre Vanilla y Seamless Co-op.", 
-                                            "Juego en Ejecución", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            Logger.Write(LocalizationManager.Get("CliGameRunning"));
+                            MessageBox.Show(
+                                LocalizationManager.Get("CliGameRunningMsg"), 
+                                LocalizationManager.Get("CliGameInExecution"),
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             Environment.Exit(1);
                         }
 
-                        // Lógica de transformación
+                        // Transformation logic
                         EstadoPartida estadoActual = SaveFileManager.DetectarEstadoActual(rutaPartidas);
                         
                         bool necesitaTransformar = (haciaSeamless && estadoActual == EstadoPartida.Vanilla) || 
@@ -102,24 +111,27 @@ namespace EldenRingSaveManager
                                                    
                         if (necesitaTransformar)
                         {
-                            Logger.Write("[CLI] Inciando transformación...");
+                            Logger.Write(LocalizationManager.Get("CliTransforming"));
                             SaveFileManager.TransformarArchivos(rutaPartidas, haciaSeamless);
                         }
                         else if (estadoActual == EstadoPartida.Mixto)
                         {
-                            Logger.Write("[CLI] Estado MIXTO en archivos de guardado. Riesgo de pérdida.");
-                            MessageBox.Show("No se puede continuar: Estado MIXTO detectado en los archivos de guardado (.sl2 y .co2 presentes a la vez). " +
-                                            "Esto podría causar pérdida de progreso. Revisa manualmente la carpeta.", 
-                                            "Advertencia Crítica", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            Logger.Write(LocalizationManager.Get("CliMixedState"));
+                            MessageBox.Show(
+                                LocalizationManager.Get("CliMixedStateMsg"), 
+                                LocalizationManager.Get("CliCriticalWarning"),
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             Environment.Exit(1);
                         }
 
-                        // Lanzar el juego
+                        // Launch the game
                         if (string.IsNullOrEmpty(ejecutableALanzar))
                         {
-                            Logger.Write("[CLI] Ruta del ejecutable vacía.");
-                            MessageBox.Show($"La ruta del ejecutable para el comando '{argumento}' no está configurada.", 
-                                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            Logger.Write(LocalizationManager.Get("CliExePathEmpty"));
+                            MessageBox.Show(
+                                LocalizationManager.Get("CliExePathNotConfigured", argumento), 
+                                LocalizationManager.Get("CliError"),
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
                             Environment.Exit(1);
                         }
 
@@ -130,12 +142,15 @@ namespace EldenRingSaveManager
                             WorkingDirectory = System.IO.Path.GetDirectoryName(ejecutableALanzar)
                         };
                         Process.Start(startInfo);
-                        Logger.Write($"[CLI] Juego lanzado vía: {ejecutableALanzar}");
+                        Logger.Write(LocalizationManager.Get("CliGameLaunched", ejecutableALanzar));
                     }
                     catch (Exception ex)
                     {
-                        Logger.Write($"[CLI] Error crítico: {ex.Message}");
-                        MessageBox.Show($"Ocurrió un error en segundo plano:\n{ex.Message}", "Error de Ejecución", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Logger.Write(LocalizationManager.Get("CliCriticalError", ex.Message));
+                        MessageBox.Show(
+                            LocalizationManager.Get("CliBackgroundError", ex.Message),
+                            LocalizationManager.Get("CliExecutionError"),
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
                         Environment.Exit(1);
                     }
 
@@ -143,7 +158,7 @@ namespace EldenRingSaveManager
                 }
                 else
                 {
-                    // Modo GUI
+                    // GUI Mode
                     Application.Run(new FormPrincipal());
                 }
             }
@@ -151,7 +166,7 @@ namespace EldenRingSaveManager
             {
                 string dt = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
                 File.WriteAllText(Path.Combine(dt, "ERManager_Crash_Main.txt"), ex.ToString());
-                MessageBox.Show("Falla crítica en inicio: " + ex.Message);
+                MessageBox.Show(LocalizationManager.Get("CliCriticalStartupFailure", ex.Message));
             }
         }
     }

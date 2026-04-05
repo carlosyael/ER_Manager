@@ -15,11 +15,11 @@ namespace EldenRingSaveManager
         public static async Task<string> InstalarActualizacionAsync(string rutaVanillaExe)
         {
             if (string.IsNullOrEmpty(rutaVanillaExe) || !File.Exists(rutaVanillaExe))
-                throw new FileNotFoundException("Por favor configura la ruta del ejecutable Vanilla (eldenring.exe) primero.");
+                throw new FileNotFoundException(LocalizationManager.Get("ModExeNotConfigured"));
 
             string directorioJuego = Path.GetDirectoryName(rutaVanillaExe);
             if (string.IsNullOrEmpty(directorioJuego))
-                throw new DirectoryNotFoundException("No se pudo determinar el directorio de origen del juego.");
+                throw new DirectoryNotFoundException(LocalizationManager.Get("ModDirNotFound"));
 
             Logger.Write("[ModInstaller] Solicitando última versión a GitHub API...");
 
@@ -36,7 +36,7 @@ namespace EldenRingSaveManager
                 {
                     JsonElement root = doc.RootElement;
                     if (!root.TryGetProperty("assets", out JsonElement assets) || assets.GetArrayLength() == 0)
-                        throw new Exception("No se encontraron descargas (assets) en la última versión de GitHub.");
+                        throw new Exception(LocalizationManager.Get("ModNoAssets"));
 
                     // Buscar el primer archivo .zip
                     string downloadUrl = string.Empty;
@@ -51,7 +51,7 @@ namespace EldenRingSaveManager
                     }
 
                     if (string.IsNullOrEmpty(downloadUrl))
-                        throw new Exception("No se encontró un archivo .zip en la release.");
+                        throw new Exception(LocalizationManager.Get("ModNoZip"));
 
                     Logger.Write($"[ModInstaller] Iniciando descarga desde: {downloadUrl}");
                     
