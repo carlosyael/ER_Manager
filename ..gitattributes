@@ -1,0 +1,11 @@
+# Detectar todos los archivos de texto y normalizarlos a LF en el repositorio
+* text=auto
+
+# Forzar que los archivos de código fuente de C# usen CRLF al extraerlos en Windows
+*.cs text eol=crlf
+*.sln text eol=crlf
+*.csproj text eol=crlf
+
+# Archivos de configuración que deben mantener su formato
+*.json text eol=lf
+*.config text eol=crlf

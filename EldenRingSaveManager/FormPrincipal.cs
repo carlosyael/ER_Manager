@@ -233,10 +233,10 @@ namespace EldenRingSaveManager
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Information);
 
-                    if (result == DialogResult.Yes && !string.IsNullOrEmpty(_latestUpdateInfo.DownloadUrl))
+                    if (result == DialogResult.Yes)
                     {
                         Log(LocalizationManager.Get("UpdateDownloading"));
-                        await AppUpdater.PerformUpdateAsync(_latestUpdateInfo.DownloadUrl, _latestUpdateInfo.AssetName);
+                        AppUpdater.OpenNexusModsPage();
                     }
                 }
                 else
@@ -437,34 +437,63 @@ namespace EldenRingSaveManager
                 return;
             }
 
-            DialogResult res = MessageBox.Show(
-                LocalizationManager.Get("MsgInstallModConfirm", Path.GetDirectoryName(txtRutaVanilla.Text)),
-                LocalizationManager.Get("MsgInstallMod"),
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (res != DialogResult.Yes) return;
-
-            Log(LocalizationManager.Get("MsgInstallingMod"));
             btnActualizador.Enabled = false;
 
             try
             {
-                string launcherPath = await ModInstaller.InstalarActualizacionAsync(txtRutaVanilla.Text);
-                txtRutaSeamless.Text = launcherPath;
-                GuardarConfiguracion("RutaSeamless", launcherPath);
-                
-                Log(LocalizationManager.Get("MsgCreatingShortcutsAuto"));
-                CrearAccesosMetodo(interactivo: false);
+                // Step 1: Check latest version via GitHub API (read-only)
+                Log(LocalizationManager.Get("MsgCheckingSeamlessVersion"));
+                var versionInfo = await ModInstaller.CheckSeamlessVersionAsync();
+                string versionMsg = string.IsNullOrEmpty(versionInfo.LatestVersion)
+                    ? "" : $" (v{versionInfo.LatestVersion})";
 
-                MessageBox.Show(
-                    LocalizationManager.Get("MsgInstallComplete"),
-                    LocalizationManager.Get("MsgCompleted"),
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // Step 2: Ask user to go to Nexus Mods to download
+                DialogResult res = MessageBox.Show(
+                    LocalizationManager.Get("MsgSeamlessNexusPrompt", versionMsg),
+                    LocalizationManager.Get("MsgInstallMod"),
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (res != DialogResult.Yes) return;
+
+                // Step 3: Open Nexus Mods page
+                ModInstaller.OpenSeamlessNexusPage();
+                Log(LocalizationManager.Get("MsgSeamlessNexusOpened"));
+
+                // Step 4: Ask user to select the downloaded .zip
+                DialogResult installRes = MessageBox.Show(
+                    LocalizationManager.Get("MsgSeamlessSelectZip"),
+                    LocalizationManager.Get("MsgInstallMod"),
+                    MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+
+                if (installRes != DialogResult.OK) return;
+
+                using (OpenFileDialog ofd = new OpenFileDialog())
+                {
+                    ofd.Filter = LocalizationManager.Get("MsgZipFilter");
+                    ofd.Title = LocalizationManager.Get("MsgSelectZipTitle");
+
+                    if (ofd.ShowDialog() != DialogResult.OK) return;
+
+                    // Step 5: Install from local zip
+                    Log(LocalizationManager.Get("MsgInstallingFromZip"));
+                    string launcherPath = ModInstaller.InstalarDesdeZip(ofd.FileName, txtRutaVanilla.Text);
+                    txtRutaSeamless.Text = launcherPath;
+                    GuardarConfiguracion("RutaSeamless", launcherPath);
+
+                    Log(LocalizationManager.Get("MsgCreatingShortcutsAuto"));
+                    CrearAccesosMetodo(interactivo: false);
+
+                    MessageBox.Show(
+                        LocalizationManager.Get("MsgInstallComplete"),
+                        LocalizationManager.Get("MsgCompleted"),
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
             catch (Exception ex)
             {
                 Log(LocalizationManager.Get("MsgInstallError", ex.Message));
                 MessageBox.Show(
-                    LocalizationManager.Get("MsgInstallErrorGithub", ex.Message),
+                    LocalizationManager.Get("MsgInstallErrorDetail", ex.Message),
                     LocalizationManager.Get("MsgInstallErrorTitle"),
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
