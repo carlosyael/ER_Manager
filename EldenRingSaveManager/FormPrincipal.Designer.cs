@@ -59,8 +59,7 @@ namespace EldenRingSaveManager
             this.cmbGameVersion = new System.Windows.Forms.ComboBox();
             this.grpAbout = new System.Windows.Forms.GroupBox();
             this.lblVersionInfo = new System.Windows.Forms.Label();
-            this.lblUpdateStatus = new System.Windows.Forms.Label();
-            this.btnCheckUpdates = new System.Windows.Forms.Button();
+            this.lblNexusUrl = new System.Windows.Forms.Label();
             
             this.tabControl1.SuspendLayout();
             this.tabGeneral.SuspendLayout();
@@ -507,14 +506,13 @@ namespace EldenRingSaveManager
             // grpAbout
             // 
             this.grpAbout.Controls.Add(this.lblVersionInfo);
-            this.grpAbout.Controls.Add(this.lblUpdateStatus);
-            this.grpAbout.Controls.Add(this.btnCheckUpdates);
+            this.grpAbout.Controls.Add(this.lblNexusUrl);
             this.grpAbout.Location = new System.Drawing.Point(6, 228);
             this.grpAbout.Name = "grpAbout";
-            this.grpAbout.Size = new System.Drawing.Size(600, 120);
+            this.grpAbout.Size = new System.Drawing.Size(600, 80);
             this.grpAbout.TabIndex = 3;
             this.grpAbout.TabStop = false;
-            this.grpAbout.Text = "About & Updates";
+            this.grpAbout.Text = "About";
             // 
             // lblVersionInfo
             // 
@@ -526,24 +524,14 @@ namespace EldenRingSaveManager
             this.lblVersionInfo.TabIndex = 0;
             this.lblVersionInfo.Text = "Current Version: v5.0.0";
             // 
-            // lblUpdateStatus
+            // lblNexusUrl
             // 
-            this.lblUpdateStatus.AutoSize = true;
-            this.lblUpdateStatus.Location = new System.Drawing.Point(15, 55);
-            this.lblUpdateStatus.Name = "lblUpdateStatus";
-            this.lblUpdateStatus.Size = new System.Drawing.Size(200, 15);
-            this.lblUpdateStatus.TabIndex = 1;
-            this.lblUpdateStatus.Text = "";
-            // 
-            // btnCheckUpdates
-            // 
-            this.btnCheckUpdates.Location = new System.Drawing.Point(15, 80);
-            this.btnCheckUpdates.Name = "btnCheckUpdates";
-            this.btnCheckUpdates.Size = new System.Drawing.Size(200, 30);
-            this.btnCheckUpdates.TabIndex = 2;
-            this.btnCheckUpdates.Text = "Check for Updates";
-            this.btnCheckUpdates.UseVisualStyleBackColor = true;
-            this.btnCheckUpdates.Click += new System.EventHandler(this.btnCheckUpdates_Click);
+            this.lblNexusUrl.AutoSize = true;
+            this.lblNexusUrl.Location = new System.Drawing.Point(15, 50);
+            this.lblNexusUrl.Name = "lblNexusUrl";
+            this.lblNexusUrl.Size = new System.Drawing.Size(400, 15);
+            this.lblNexusUrl.TabIndex = 1;
+            this.lblNexusUrl.Text = "";
             // 
             // FormPrincipal
             // 
@@ -629,7 +617,6 @@ namespace EldenRingSaveManager
         private System.Windows.Forms.ComboBox cmbGameVersion;
         private System.Windows.Forms.GroupBox grpAbout;
         private System.Windows.Forms.Label lblVersionInfo;
-        private System.Windows.Forms.Label lblUpdateStatus;
-        private System.Windows.Forms.Button btnCheckUpdates;
+        private System.Windows.Forms.Label lblNexusUrl;
     }
 }

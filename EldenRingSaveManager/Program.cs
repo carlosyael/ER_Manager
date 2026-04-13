@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
-using Microsoft.Win32;
 
 namespace EldenRingSaveManager
 {
@@ -68,27 +67,16 @@ namespace EldenRingSaveManager
 
                     try
                     {
-                        // Steam detection
+                        // Steam detection (no registry access — just check if running)
                         Process[] steamProcs = Process.GetProcessesByName("steam");
                         if (steamProcs.Length == 0)
                         {
                             Logger.Write(LocalizationManager.Get("CliSteamNotActive"));
-                            string steamPath = (string)Registry.GetValue(@"HKEY_CURRENT_USER\Software\Valve\Steam", "SteamExe", null);
-                            if (!string.IsNullOrEmpty(steamPath) && File.Exists(steamPath))
-                            {
-                                Process.Start(steamPath);
-                                Logger.Write(LocalizationManager.Get("CliSteamLaunched"));
-                                System.Threading.Thread.Sleep(3000);
-                            }
-                            else
-                            {
-                                Logger.Write(LocalizationManager.Get("CliSteamNotFound"));
-                                MessageBox.Show(
-                                    LocalizationManager.Get("CliSteamRequired"), 
-                                    LocalizationManager.Get("CliWarning"),
-                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                Environment.Exit(1);
-                            }
+                            MessageBox.Show(
+                                LocalizationManager.Get("CliSteamRequired"), 
+                                LocalizationManager.Get("CliWarning"),
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            Environment.Exit(1);
                         }
 
                         // Validate game is not already running

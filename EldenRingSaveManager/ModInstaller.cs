@@ -1,79 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace EldenRingSaveManager
 {
     public static class ModInstaller
     {
-        private const string GithubApiUrl = "https://api.github.com/repos/LukeYui/EldenRingSeamlessCoopRelease/releases/latest";
-        public const string SeamlessNexusUrl = "https://www.nexusmods.com/eldenring/mods/510?tab=files";
-
-        public class SeamlessVersionInfo
-        {
-            public string LatestVersion { get; set; } = "";
-            public string ReleaseNotes { get; set; } = "";
-        }
-
-        /// <summary>
-        /// Checks GitHub for the latest Seamless Co-op version (read-only, no download).
-        /// </summary>
-        public static async Task<SeamlessVersionInfo> CheckSeamlessVersionAsync()
-        {
-            var result = new SeamlessVersionInfo();
-
-            using (HttpClient client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("EldenRingSaveManager", "2.0"));
-                client.Timeout = TimeSpan.FromSeconds(10);
-
-                var response = await client.GetAsync(GithubApiUrl);
-                response.EnsureSuccessStatusCode();
-
-                string jsonContent = await response.Content.ReadAsStringAsync();
-
-                using (JsonDocument doc = JsonDocument.Parse(jsonContent))
-                {
-                    JsonElement root = doc.RootElement;
-
-                    string tagName = root.GetProperty("tag_name").GetString() ?? "";
-                    result.LatestVersion = tagName.TrimStart('v', 'V');
-
-                    if (root.TryGetProperty("body", out JsonElement bodyElement))
-                        result.ReleaseNotes = bodyElement.GetString() ?? "";
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Opens the Seamless Co-op Nexus Mods page in the user's default browser.
-        /// </summary>
-        public static void OpenSeamlessNexusPage()
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = SeamlessNexusUrl,
-                    UseShellExecute = true
-                });
-                Logger.Write($"[ModInstaller] Opened Seamless Co-op Nexus page: {SeamlessNexusUrl}");
-            }
-            catch (Exception ex)
-            {
-                Logger.Write($"[ModInstaller] Error opening Nexus page: {ex.Message}");
-                throw;
-            }
-        }
-
         /// <summary>
         /// Installs Seamless Co-op from a locally downloaded .zip file.
         /// Preserves existing ersc_settings.ini values during upgrade.
