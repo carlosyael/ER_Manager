@@ -2,16 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace EldenRingSaveManager
 {
     public static class ModInstaller
     {
-        /// <summary>
-        /// Installs Seamless Co-op from a locally downloaded .zip file.
-        /// Preserves existing ersc_settings.ini values during upgrade.
-        /// </summary>
-        public static string InstalarDesdeZip(string zipPath, string rutaVanillaExe)
+        private const string GithubApiUrl = "https://api.github.com/repos/LukeYui/EldenRingSeamlessCoopRelease/releases/latest";
+
+        public static async Task<string> InstalarActualizacionAsync(string rutaVanillaExe)
         {
             if (string.IsNullOrEmpty(rutaVanillaExe) || !File.Exists(rutaVanillaExe))
                 throw new FileNotFoundException(LocalizationManager.Get("ModExeNotConfigured"));
@@ -20,24 +22,70 @@ namespace EldenRingSaveManager
             if (string.IsNullOrEmpty(directorioJuego))
                 throw new DirectoryNotFoundException(LocalizationManager.Get("ModDirNotFound"));
 
-            if (!File.Exists(zipPath))
-                throw new FileNotFoundException(LocalizationManager.Get("ModZipNotFound"));
+            Logger.Write("[ModInstaller] Solicitando última versión a GitHub API...");
 
-            Logger.Write($"[ModInstaller] Installing from local zip: {zipPath}");
-
-            // Extract preserving ersc_settings.ini if it already exists
-            ExtraerZIPInteligentemente(zipPath, directorioJuego);
-
-            Logger.Write("[ModInstaller] Installation from local zip completed.");
-
-            // Try to return the possible launcher path
-            string posibleLauncher = Path.Combine(directorioJuego, "launch_elden_ring_seamlesscoop.exe");
-            if (!File.Exists(posibleLauncher))
+            using (HttpClient client = new HttpClient())
             {
-                posibleLauncher = Path.Combine(directorioJuego, "ersc_launcher.exe");
-            }
+                client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("EldenRingSaveManager", "2.0"));
+                
+                var response = await client.GetAsync(GithubApiUrl);
+                response.EnsureSuccessStatusCode();
 
-            return posibleLauncher;
+                string jsonContent = await response.Content.ReadAsStringAsync();
+                
+                using (JsonDocument doc = JsonDocument.Parse(jsonContent))
+                {
+                    JsonElement root = doc.RootElement;
+                    if (!root.TryGetProperty("assets", out JsonElement assets) || assets.GetArrayLength() == 0)
+                        throw new Exception(LocalizationManager.Get("ModNoAssets"));
+
+                    // Buscar el primer archivo .zip
+                    string downloadUrl = string.Empty;
+                    foreach (var asset in assets.EnumerateArray())
+                    {
+                        string nombre = asset.GetProperty("name").GetString();
+                        if (nombre != null && nombre.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                        {
+                            downloadUrl = asset.GetProperty("browser_download_url").GetString();
+                            break;
+                        }
+                    }
+
+                    if (string.IsNullOrEmpty(downloadUrl))
+                        throw new Exception(LocalizationManager.Get("ModNoZip"));
+
+                    Logger.Write($"[ModInstaller] Iniciando descarga desde: {downloadUrl}");
+                    
+                    string tempZipPath = Path.Combine(Path.GetTempPath(), "SeamlessCoopUpdate.zip");
+                    
+                    var downloadResponse = await client.GetAsync(downloadUrl);
+                    downloadResponse.EnsureSuccessStatusCode();
+
+                    using (var fs = new FileStream(tempZipPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        await downloadResponse.Content.CopyToAsync(fs);
+                    }
+
+                    Logger.Write("[ModInstaller] Descarga completada. Extrayendo archivos...");
+                    
+                    // Extraer preservando ersc_settings.ini si ya existe
+                    ExtraerZIPInteligentemente(tempZipPath, directorioJuego);
+
+                    // Borrar zip temporal
+                    File.Delete(tempZipPath);
+
+                    Logger.Write("[ModInstaller] Instalación completada.");
+                    
+                    // Intentar devolver la posible ubicación del instalador
+                    string posibleLauncher = Path.Combine(directorioJuego, "launch_elden_ring_seamlesscoop.exe");
+                    if (!File.Exists(posibleLauncher))
+                    {
+                        posibleLauncher = Path.Combine(directorioJuego, "ersc_launcher.exe"); // Nombres alternativos
+                    }
+                    
+                    return posibleLauncher;
+                }
+            }
         }
 
         private static void ExtraerZIPInteligentemente(string zipPath, string targetDir)

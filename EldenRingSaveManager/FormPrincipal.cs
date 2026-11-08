@@ -13,6 +13,7 @@ namespace EldenRingSaveManager
         private bool isUpdatingProfiles = false;
         private bool isUpdatingLanguage = false;
         private bool isUpdatingTheme = false;
+        private AppUpdater.UpdateInfo _latestUpdateInfo = null;
 
         private string CurrentIniPath => !string.IsNullOrEmpty(txtRutaVanilla.Text) 
             ? Path.Combine(Path.GetDirectoryName(txtRutaVanilla.Text), "SeamlessCoop", "ersc_settings.ini")
@@ -24,7 +25,7 @@ namespace EldenRingSaveManager
             InitializeComponent();
         }
 
-        private void FormPrincipal_Load(object sender, EventArgs e)
+        private async void FormPrincipal_Load(object sender, EventArgs e)
         {
             txtRutaPartidas.Text = ConfigHelper.GetSetting("RutaPartidas") ?? string.Empty;
             txtRutaVanilla.Text = ConfigHelper.GetSetting("RutaVanilla") ?? string.Empty;
@@ -41,6 +42,9 @@ namespace EldenRingSaveManager
             Log(LocalizationManager.Get("MsgAppStarted", AppUpdater.AppVersion));
 
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
+
+            // Check for updates on startup (silent, non-blocking)
+            await CheckForUpdateSilentAsync();
         }
 
         // --- Localization ---
@@ -72,7 +76,6 @@ namespace EldenRingSaveManager
             lblTheme.Text = LocalizationManager.Get("LabelTheme");
             lblGameVersion.Text = LocalizationManager.Get("LabelGameVersion");
             lblVersionInfo.Text = LocalizationManager.Get("LabelVersion", AppUpdater.AppVersion);
-            lblNexusUrl.Text = $"Nexus Mods: {AppUpdater.NexusModsUrl}";
 
             // Buttons
             btnSeleccionarPartidas.Text = LocalizationManager.Get("BtnSelect");
@@ -88,6 +91,7 @@ namespace EldenRingSaveManager
             btnModoExperto.Text = txtSeamlessIni.Visible 
                 ? LocalizationManager.Get("BtnToggleVisual") 
                 : LocalizationManager.Get("BtnToggleExpert");
+            btnCheckUpdates.Text = LocalizationManager.Get("BtnCheckUpdates");
 
             // DataGridView columns
             colProperty.HeaderText = LocalizationManager.Get("ColSetting");
@@ -99,6 +103,15 @@ namespace EldenRingSaveManager
             // Update theme/game dropdowns text (they're localized)
             RefreshThemeDropdown();
             RefreshGameVersionDropdown();
+
+            // Update the update status label if we have info
+            if (_latestUpdateInfo != null)
+            {
+                if (_latestUpdateInfo.UpdateAvailable)
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpdateAvailable", _latestUpdateInfo.LatestVersion);
+                else
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpToDate");
+            }
         }
 
         private void InitializeSettingsTab()
@@ -173,7 +186,76 @@ namespace EldenRingSaveManager
             }
         }
 
+        // --- Update Check ---
+        private async Task CheckForUpdateSilentAsync()
+        {
+            try
+            {
+                lblUpdateStatus.Text = LocalizationManager.Get("LabelCheckingUpdate");
+                _latestUpdateInfo = await AppUpdater.CheckForUpdateAsync();
 
+                if (_latestUpdateInfo.UpdateAvailable)
+                {
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpdateAvailable", _latestUpdateInfo.LatestVersion);
+                    lblUpdateStatus.ForeColor = System.Drawing.Color.DarkOrange;
+                    Log($"🆕 {LocalizationManager.Get("LabelUpdateAvailable", _latestUpdateInfo.LatestVersion)}");
+                }
+                else
+                {
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpToDate");
+                    lblUpdateStatus.ForeColor = System.Drawing.Color.Green;
+                }
+            }
+            catch (Exception ex)
+            {
+                lblUpdateStatus.Text = "";
+                Logger.Write($"[AppUpdater] Silent check failed: {ex.Message}");
+            }
+        }
+
+        private async void btnCheckUpdates_Click(object sender, EventArgs e)
+        {
+            btnCheckUpdates.Enabled = false;
+            lblUpdateStatus.Text = LocalizationManager.Get("LabelCheckingUpdate");
+
+            try
+            {
+                _latestUpdateInfo = await AppUpdater.CheckForUpdateAsync();
+
+                if (_latestUpdateInfo.UpdateAvailable)
+                {
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpdateAvailable", _latestUpdateInfo.LatestVersion);
+                    lblUpdateStatus.ForeColor = System.Drawing.Color.DarkOrange;
+
+                    DialogResult result = MessageBox.Show(
+                        LocalizationManager.Get("UpdateAvailableMsg", _latestUpdateInfo.LatestVersion, _latestUpdateInfo.ReleaseNotes),
+                        LocalizationManager.Get("UpdateAvailable"),
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Information);
+
+                    if (result == DialogResult.Yes && !string.IsNullOrEmpty(_latestUpdateInfo.DownloadUrl))
+                    {
+                        Log(LocalizationManager.Get("UpdateDownloading"));
+                        await AppUpdater.PerformUpdateAsync(_latestUpdateInfo.DownloadUrl, _latestUpdateInfo.AssetName);
+                    }
+                }
+                else
+                {
+                    lblUpdateStatus.Text = LocalizationManager.Get("LabelUpToDate");
+                    lblUpdateStatus.ForeColor = System.Drawing.Color.Green;
+                    MessageBox.Show(LocalizationManager.Get("LabelUpToDate"), "Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(LocalizationManager.Get("UpdateError", ex.Message));
+                MessageBox.Show(
+                    LocalizationManager.Get("UpdateError", ex.Message),
+                    LocalizationManager.Get("UpdateErrorTitle"),
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally { btnCheckUpdates.Enabled = true; }
+        }
 
         // --- Gestión de Configuración Base ---
         private void btnSeleccionarPartidas_Click(object sender, EventArgs e)
@@ -344,7 +426,7 @@ namespace EldenRingSaveManager
         }
 
         // --- Instalador ---
-        private void btnActualizador_Click(object sender, EventArgs e)
+        private async void btnActualizador_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(txtRutaVanilla.Text))
             {
@@ -355,37 +437,34 @@ namespace EldenRingSaveManager
                 return;
             }
 
+            DialogResult res = MessageBox.Show(
+                LocalizationManager.Get("MsgInstallModConfirm", Path.GetDirectoryName(txtRutaVanilla.Text)),
+                LocalizationManager.Get("MsgInstallMod"),
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (res != DialogResult.Yes) return;
+
+            Log(LocalizationManager.Get("MsgInstallingMod"));
             btnActualizador.Enabled = false;
 
             try
             {
-                // Direct local zip install — no network calls
-                using (OpenFileDialog ofd = new OpenFileDialog())
-                {
-                    ofd.Filter = LocalizationManager.Get("MsgZipFilter");
-                    ofd.Title = LocalizationManager.Get("MsgSelectZipTitle");
+                string launcherPath = await ModInstaller.InstalarActualizacionAsync(txtRutaVanilla.Text);
+                txtRutaSeamless.Text = launcherPath;
+                GuardarConfiguracion("RutaSeamless", launcherPath);
+                
+                Log(LocalizationManager.Get("MsgCreatingShortcutsAuto"));
+                CrearAccesosMetodo(interactivo: false);
 
-                    if (ofd.ShowDialog() != DialogResult.OK) return;
-
-                    Log(LocalizationManager.Get("MsgInstallingFromZip"));
-                    string launcherPath = ModInstaller.InstalarDesdeZip(ofd.FileName, txtRutaVanilla.Text);
-                    txtRutaSeamless.Text = launcherPath;
-                    GuardarConfiguracion("RutaSeamless", launcherPath);
-
-                    Log(LocalizationManager.Get("MsgCreatingShortcutsAuto"));
-                    CrearAccesosMetodo(interactivo: false);
-
-                    MessageBox.Show(
-                        LocalizationManager.Get("MsgInstallComplete"),
-                        LocalizationManager.Get("MsgCompleted"),
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                MessageBox.Show(
+                    LocalizationManager.Get("MsgInstallComplete"),
+                    LocalizationManager.Get("MsgCompleted"),
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 Log(LocalizationManager.Get("MsgInstallError", ex.Message));
                 MessageBox.Show(
-                    LocalizationManager.Get("MsgInstallErrorDetail", ex.Message),
+                    LocalizationManager.Get("MsgInstallErrorGithub", ex.Message),
                     LocalizationManager.Get("MsgInstallErrorTitle"),
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
