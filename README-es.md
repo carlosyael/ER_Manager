@@ -1,4 +1,6 @@
-# 💍 Elden Ring: Seamless Co-op Save Manager & Launcher v4.1
+# 💍 Elden Ring: Seamless Co-op Save Manager & Launcher v5.2
+
+> 🌍 También disponible en: [English](README.md)
 
 Una herramienta "Todo en Uno" desarrollada en C# (.NET 8 / Windows Forms) diseñada para gestionar automáticamente los archivos de guardado de *Elden Ring*. Permite alternar de forma rápida y segura entre el juego base (Vanilla) y el mod *Seamless Co-op*, con instalación automática del mod, editor de configuración integrado, backups inteligentes y mucho más.
 
@@ -25,9 +27,15 @@ Normalmente, los jugadores deben renombrar estos archivos manualmente cada vez q
 * **👥 Sistema Multi-Perfil Cooperativo:** Crea perfiles aislados para distintas campañas cooperativas (ej: "Coop con María", "Coop Raid"). Cada perfil mantiene sus propios archivos `.co2` separados.
 
 ### Instalador & Configuración del Mod
-* **📥 Instalador Automático desde GitHub:** Descarga e instala/actualiza *Seamless Co-op* directamente desde la [releases de LukeYui](https://github.com/LukeYui/EldenRingSeamlessCoopRelease/releases) con un solo clic. Preserva tu archivo de configuración `ersc_settings.ini` existente durante la actualización.
+* **📥 Instalador Automático desde GitHub:** Descarga e instala/actualiza *Seamless Co-op* directamente desde las [releases de LukeYui](https://github.com/LukeYui/EldenRingSeamlessCoopRelease/releases) con un solo clic. Migra de forma inteligente los valores de tu archivo `ersc_settings.ini` existente hacia la nueva versión, preservando cualquier ajuste nuevo añadido por el autor del mod.
 * **📝 Editor de Configuración INI Dinámico:** Pestaña integrada que lee dinámicamente el archivo `ersc_settings.ini` y lo presenta en una cuadrícula editable (Ajuste / Valor). Los cambios se guardan de forma quirúrgica, respetando los comentarios y la estructura original del archivo.
 * **🔧 Modo Experto:** Botón toggle para alternar entre la vista de formulario visual y el modo de texto plano para usuarios avanzados.
+
+### Ajustes & Localización
+* **🌍 Soporte Multi-Idioma:** Alterna entre Inglés y Español desde la pestaña de Ajustes. La interfaz se actualiza al instante sin necesidad de reiniciar.
+* **🎨 Selección de Tema:** Alterna en tiempo real entre el Tema Claro y el Tema Oscuro (con paleta azul profundo y dorado inspirada en Elden Ring).
+* **🎮 Selector de Versión de Juego:** Preparado para soporte futuro de Dark Souls Remastered y Dark Souls III.
+* **🔄 Auto-Actualizador:** Comprueba automáticamente si hay nuevas versiones al iniciar y permite actualizar y reiniciar con un solo clic desde GitHub Releases.
 
 ### Mantenimiento
 * **🧹 Limpiador de Crash Dumps:** Elimina archivos temporales de crasheo (`.mdmp`, `.tmp`) que se acumulan en la carpeta del juego.
@@ -49,6 +57,12 @@ Normalmente, los jugadores deben renombrar estos archivos manualmente cada vez q
 2. Edita cualquier parámetro directamente en la cuadrícula (contraseña, invasiones, escalado, etc.).
 3. Pulsa **"Guardar Cambios"** — el archivo original se modifica sin perder comentarios ni estructura.
 
+### Pestaña de Ajustes
+1. Navega a la pestaña **"Ajustes"**.
+2. Cambia el **Idioma** entre English y Español.
+3. Alterna el **Tema** entre Claro y Oscuro.
+4. Consulta la versión actual y pulsa **"Buscar Actualizaciones"** desde GitHub.
+
 ## 🛠️ Tecnologías
 
 * **Lenguaje:** C# (.NET 8)
@@ -64,10 +78,13 @@ Normalmente, los jugadores deben renombrar estos archivos manualmente cada vez q
 ```
 EldenRingSaveManager/
 ├── Program.cs                  # Punto de entrada (CLI/GUI routing + crash handlers)
-├── FormPrincipal.cs            # Lógica de la interfaz (perfiles, instalador, editor INI)
+├── FormPrincipal.cs            # Lógica de la interfaz (perfiles, instalador, editor INI, ajustes)
 ├── FormPrincipal.Designer.cs   # Layout de la UI (TabControl, DataGridView, controles)
 ├── SaveFileManager.cs          # Backups, transformación .sl2↔.co2, perfiles, limpieza
-├── ModInstaller.cs             # Descarga de GitHub API + extracción inteligente de ZIP
+├── ModInstaller.cs             # Descarga de GitHub API + extracción inteligente y migración de INI
+├── AppUpdater.cs               # Comprobador e instalador de actualizaciones vía GitHub Releases
+├── LocalizationManager.cs      # Sistema multi-idioma i18n (en/es)
+├── ThemeManager.cs             # Motor de temas Claro y Oscuro
 ├── ShortcutCreator.cs          # Creador de accesos directos .lnk
 ├── ConfigHelper.cs             # Persistencia de configuración en config.json
 ├── Logger.cs                   # Registro de actividad en app.log

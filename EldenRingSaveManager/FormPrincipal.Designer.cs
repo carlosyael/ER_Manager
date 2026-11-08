@@ -524,7 +524,7 @@ namespace EldenRingSaveManager
             this.lblVersionInfo.Name = "lblVersionInfo";
             this.lblVersionInfo.Size = new System.Drawing.Size(150, 19);
             this.lblVersionInfo.TabIndex = 0;
-            this.lblVersionInfo.Text = "Current Version: v5.0.0";
+            this.lblVersionInfo.Text = "Current Version: v5.2.0";
             // 
             // lblUpdateStatus
             // 
@@ -555,7 +555,7 @@ namespace EldenRingSaveManager
             this.MaximizeBox = false;
             this.Name = "FormPrincipal";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Elden Ring: Seamless Co-op Save Manager v5.0";
+            this.Text = "Elden Ring: Seamless Co-op Save Manager v5.2";
             this.Load += new System.EventHandler(this.FormPrincipal_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabGeneral.ResumeLayout(false);

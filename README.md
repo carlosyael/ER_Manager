@@ -1,6 +1,6 @@
-# 💍 Elden Ring: Seamless Co-op Save Manager & Launcher v5.0
+# 💍 Elden Ring: Seamless Co-op Save Manager & Launcher v5.2
 
-> 🌍 Also available in: [Español](README.es.md)
+> 🌍 Also available in: [Español](README-es.md)
 
 An all-in-one tool built in C# (.NET 8 / Windows Forms) designed to automatically manage *Elden Ring* save files. It allows you to quickly and safely switch between the base game (Vanilla) and the *Seamless Co-op* mod, with automatic mod installation, built-in configuration editor, smart backups, and much more.
 
@@ -27,15 +27,15 @@ Normally, players must rename these files manually every time they want to switc
 * **👥 Multi-Profile Co-op System:** Create isolated profiles for different co-op campaigns (e.g., "Coop with Maria", "Coop Raid"). Each profile maintains its own separate `.co2` files.
 
 ### Mod Installer & Configuration
-* **📥 Automatic Installer from GitHub:** Downloads and installs/updates *Seamless Co-op* directly from [LukeYui's releases](https://github.com/LukeYui/EldenRingSeamlessCoopRelease/releases) with a single click. Preserves your existing `ersc_settings.ini` configuration file during updates.
+* **📥 Automatic Installer from GitHub:** Downloads and installs/updates *Seamless Co-op* directly from [LukeYui's releases](https://github.com/LukeYui/EldenRingSeamlessCoopRelease/releases) with a single click. Intelligently migrates your existing `ersc_settings.ini` values into the new version while preserving any new settings added by the mod author.
 * **📝 Dynamic INI Configuration Editor:** Built-in tab that dynamically reads the `ersc_settings.ini` file and presents it in an editable grid (Setting / Value). Changes are saved surgically, respecting the original comments and file structure.
 * **🔧 Expert Mode:** Toggle button to switch between the visual form view and plain text mode for advanced users.
 
 ### Settings & Localization
-* **🌍 Multi-Language Support:** Switch between English and Spanish from the Settings tab. The interface updates instantly.
-* **🎨 Theme Selection:** Light and Dark theme options (Dark theme coming soon).
+* **🌍 Multi-Language Support:** Switch between English and Spanish from the Settings tab. The interface updates instantly without restarting.
+* **🎨 Theme Selection:** Switch between Light and Dark themes (Elden Ring-inspired dark navy & gold palette) in real time.
 * **🎮 Game Version Selector:** Prepared for future Dark Souls Remastered and Dark Souls III support.
-* **🔄 Auto-Updater:** Automatically checks for new versions on startup and allows one-click updates from GitHub Releases.
+* **🔄 Auto-Updater:** Automatically checks for new versions on startup and allows one-click updates and automatic restart from GitHub Releases.
 
 ### Maintenance
 * **🧹 Crash Dump Cleaner:** Removes temporary crash files (`.mdmp`, `.tmp`) that accumulate in the game folder.
@@ -60,7 +60,8 @@ Normally, players must rename these files manually every time they want to switc
 ### Settings Tab
 1. Navigate to the **"Settings"** tab.
 2. Change the **Language** between English and Español.
-3. View the current version and **Check for Updates** from GitHub.
+3. Switch the **Theme** between Light and Dark.
+4. View the current version and **Check for Updates** from GitHub.
 
 ## 🛠️ Technologies
 
@@ -80,13 +81,14 @@ EldenRingSaveManager/
 ├── FormPrincipal.cs            # UI logic (profiles, installer, INI editor, settings)
 ├── FormPrincipal.Designer.cs   # UI layout (TabControl, DataGridView, controls)
 ├── SaveFileManager.cs          # Backups, .sl2↔.co2 transformation, profiles, cleanup
-├── ModInstaller.cs             # GitHub API download + smart ZIP extraction
-├── AppUpdater.cs               # Self-update checker via GitHub Releases
+├── ModInstaller.cs             # GitHub API download + smart ZIP extraction & INI migration
+├── AppUpdater.cs               # Self-update checker & installer via GitHub Releases
 ├── LocalizationManager.cs      # Multi-language i18n system (en/es)
+├── ThemeManager.cs             # Light & Dark theme engine
 ├── ShortcutCreator.cs          # Desktop shortcut (.lnk) creator
 ├── ConfigHelper.cs             # Configuration persistence in config.json
 ├── Logger.cs                   # Activity logging to app.log
-└── EldenRingSaveManager.csproj  # .NET 8 WinForms project
+└── EldenRingSaveManager.csproj # .NET 8 WinForms project
 ```
 
 ## 👨‍💻 Author

@@ -1,6 +1,15 @@
-# Elden Ring: Seamless Co-op Save Manager v5.0
+# Elden Ring: Seamless Co-op Save Manager v5.2
 
-The ultimate all-in-one organizer and launcher for Elden Ring! This tool automatically manages save file rotation, protects your progress, and lets you configure the Seamless Co-op mod without ever touching hidden internal files.
+The ultimate all-in-one organizer and launcher for Elden Ring! This release restores the complete automated experience: one-click Seamless Co-op downloads directly from GitHub, automatic application self-updates, smart INI migration, and Steam auto-detection.
+
+---
+
+## 🔄 What's Changed in v5.2
+
+- **Restored One-Click Seamless Co-op Installer:** Automatically downloads and extracts the latest Seamless Co-op release directly from [LukeYui's GitHub releases](https://github.com/LukeYui/EldenRingSeamlessCoopRelease/releases) without requiring manual browser downloads or local `.zip` selection.
+- **Restored Full Auto-Updater:** Silent startup update check, on-demand "Check for Updates" button in Settings, and one-click automatic download, replacement, and restart (`PerformUpdateAsync`).
+- **Restored Automatic Steam Launch:** Automatically detects and launches Steam via the Windows Registry if it is not running when launching the game from desktop shortcuts.
+- **Updated Documentation (EN & ES):** Synchronized both `README.md` and `README-es.md` with all v5.2 features and project structure.
 
 ---
 
@@ -14,61 +23,19 @@ The ultimate all-in-one organizer and launcher for Elden Ring! This tool automat
   - **GUI Mode:** Open the app to configure paths, profiles, and mod settings visually.
   - **Silent Mode (CLI):** Use one-click desktop shortcuts that swap files in the background, launch the game, and close instantly — no loading windows.
 
-- **🔒 Steam Auto-Detection:** The app checks the Windows registry to ensure Steam is running before injecting the game, preventing ghost crashes from the mod.
+- **🔒 Steam Auto-Detection:** Checks the Windows registry to ensure Steam is running before injecting the game, preventing ghost crashes from the mod.
 
 - **🛡️ Anti-Conflict Protection:** Blocks launching if `eldenring.exe` is already running, preventing save corruption.
 
 - **💾 Automatic Backups:** Before every file transformation, a timestamped backup (`YYYYMMDD_HHMMSS`) is created in `/EldenRing_Backups/`. Your progress is literally impossible to corrupt.
 
-- **📥 One-Click Mod Installer:** Downloads and installs/updates Seamless Co-op directly from [LukeYui's GitHub releases](https://github.com/LukeYui/EldenRingSeamlessCoopRelease/releases) with a single button press.
+- **📥 One-Click Mod Installer & Smart INI Migration:** Downloads and installs/updates Seamless Co-op directly from GitHub with a single button press, using a **3-pass migration strategy** to preserve all your custom `ersc_settings.ini` values while keeping new options added in mod updates.
 
-- **📝 Dynamic INI Config Editor:** A dedicated tab reads your `ersc_settings.ini` line-by-line and displays it in an interactive grid. Edit passwords, invasions, scaling, and other settings visually, then save — preserving all original comments and structure.
+- **📝 Dynamic INI Config Editor & Expert Mode:** Edit passwords, invasions, scaling, and other settings visually in an interactive grid or raw text mode — preserving all original comments and structure.
 
-- **🔧 Expert Mode:** Toggle between the visual form editor and raw text mode for advanced users.
+- **🌍 Multi-Language (EN/ES) & 🌙 Dark Theme:** Instant language switching between English and Español, plus an Elden Ring-inspired dark navy and gold theme.
 
-- **🖥️ Custom Shortcut Creator:** Generate desktop shortcuts for "Launch Vanilla" and "Launch Seamless Co-op" with support for custom `.ico` icons.
-
-- **🧹 Crash Dump Cleaner:** Remove accumulated `.mdmp` and `.tmp` crash files from the game folder.
-
-- **📋 Activity Log:** All actions, backups, and events are logged in the UI and persisted to `app.log`.
-
----
-
-## ✨ What's New in v5.0
-
-### 🌍 Multi-Language Interface (i18n)
-The entire UI now defaults to **English** and can be instantly switched to **Spanish** from the Settings tab. All buttons, labels, dialogs, messages, and log entries update in real-time — no restart required.
-
-### ⚙️ Settings Tab
-A brand-new **Settings** tab with:
-- **Language selector** — English / Español
-- **Theme selector** — Light / Dark
-- **Game version selector** — Elden Ring (active), Dark Souls Remastered & Dark Souls III (coming soon)
-- **About & Updates** section with version info and update status
-
-### 🌙 Dark Theme
-A fully implemented **dark theme** with an Elden Ring-inspired palette:
-- Deep navy backgrounds with golden accent highlights
-- Styled buttons with hover/press effects
-- Dark DataGridView with alternating rows and gold headers
-- Applies to every control in the application instantly
-
-### 🔄 Auto-Updater
-- **Automatic check on startup:** The app silently checks GitHub for newer releases every time it launches.
-- **Manual check:** A "Check for Updates" button in Settings for on-demand checking.
-- **One-click update:** If a new version is found, download and install it with a single click — the app restarts automatically with the new version.
-- **Smart version parsing:** Handles any GitHub tag format (e.g. `ER_ManagerV5`, `v5.0.0`, `release-5.0`).
-
-### 🔀 Smart INI Migration on Mod Update
-Previously, updating the Seamless Co-op mod would either overwrite your `ersc_settings.ini` (losing your settings) or skip it entirely (missing new config options). Now the installer uses a **3-pass migration strategy:**
-1. **Read** — Captures all your current settings (password, scaling, invasions, etc.)
-2. **Extract** — Installs the new INI with any new options the mod author added
-3. **Migrate** — Carries over your old values into matching keys in the new file
-
-This ensures you always have the latest config structure while keeping all your customizations.
-
-### 📄 English README
-The project README has been fully translated to English, with the original Spanish version preserved as `README.es.md`.
+- **🖥️ Custom Shortcut Creator & 🧹 Crash Dump Cleaner:** Generate desktop shortcuts with custom `.ico` support and clean up `.mdmp`/`.tmp` crash files.
 
 ---
 

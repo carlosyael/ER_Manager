@@ -10,7 +10,7 @@ namespace EldenRingSaveManager
 {
     public static class AppUpdater
     {
-        public const string AppVersion = "5.0.0";
+        public const string AppVersion = "5.2.0";
         private const string GithubApiUrl = "https://api.github.com/repos/carlosyael/ER_Manager/releases/latest";
 
         public class UpdateInfo
